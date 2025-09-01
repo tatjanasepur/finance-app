@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="sr">
+<head>
+  <meta charset="utf-8" />
+  <title>Pretplate — T·Solutions</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <div class="hero"></div>
+  <header class="nav glass">
+    <div class="brand">
+      <img src="./logo.png" class="logo" alt="T·Solutions" />
+      <div class="brand-text"><div class="brand-title">T·Solutions</div><div class="brand-sub">SUBSCRIPTIONS</div></div>
+    </div>
+    <div class="spacer"></div>
+    <nav class="row" style="gap:8px;">
+      <a href="/" class="btnlink">Početna</a>
+      <a href="/subscriptions.html" class="btnlink">Pretplate</a>
+      <a href="/shared.html" class="btnlink">Zajednički troškovi</a>
+      <button id="logoutBtn">Odjava</button>
+    </nav>
+  </header>
+
+  <main class="container">
+    <section class="card glass">
+      <h2>Dodaj pretplatu</h2>
+      <form id="subForm" class="grid" style="grid-template-columns:repeat(4,minmax(0,1fr));">
+        <label>Servis
+          <select name="service" id="serviceSel">
+            <option>Netflix</option><option>Spotify</option><option>YouTube Premium</option><option>HBO Max</option>
+            <option>PlayStation Plus</option><option>Disney+</option><option>iCloud</option><option>Google One</option>
+          </select>
+        </label>
+        <label>Iznos (€) <input name="amount" type="number" step="0.01" required /></label>
+        <label>Sledeća naplata <input name="next_due" type="date" required /></label>
+        <label>Period (dana) <input name="period_days" type="number" value="30" /></label>
+        <div></div><button type="submit">Sačuvaj pretplatu</button>
+      </form>
+    </section>
+
+    <section class="card glass">
+      <h2>Moje pretplate</h2>
+      <div id="subs"></div>
+    </section>
+  </main>
+
+  <footer>© T·Solutions</footer>
+  <script src="./subscriptions.js"></script>
+</body>
+</html>

@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="sr">
+<head>
+  <meta charset="utf-8" />
+  <title>Zajednički troškovi — T·Solutions</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <div class="hero"></div>
+  <header class="nav glass">
+    <div class="brand">
+      <img src="./logo.png" class="logo" alt="T·Solutions" />
+      <div class="brand-text"><div class="brand-title">T·Solutions</div><div class="brand-sub">SHARED</div></div>
+    </div>
+    <div class="spacer"></div>
+    <nav class="row" style="gap:8px;">
+      <a href="/" class="btnlink">Početna</a>
+      <a href="/subscriptions.html" class="btnlink">Pretplate</a>
+      <a href="/shared.html" class="btnlink">Zajednički troškovi</a>
+      <button id="logoutBtn">Odjava</button>
+    </nav>
+  </header>
+
+  <main class="container">
+    <section class="card glass">
+      <h2>Kreiraj grupu</h2>
+      <form id="shareForm" class="row"><input name="label" placeholder="npr. Porodični budžet" /><button type="submit">Kreiraj</button></form>
+      <div id="shareMsg" style="color:var(--muted);font-size:13px;margin-top:8px;"></div>
+    </section>
+
+    <section class="card glass">
+      <h2>Moje grupe</h2>
+      <div id="shares"></div>
+    </section>
+
+    <section class="card glass">
+      <h2>Priključi se putem pozivnice</h2>
+      <form id="joinForm" class="row"><input name="token" placeholder="Token iz linka ?token=..." /><button type="submit">Join</button></form>
+    </section>
+
+    <section class="card glass">
+      <h2>Chat</h2>
+      <form id="chatForm" class="row"><input name="share_id" placeholder="ID grupe" /><input name="body" placeholder="Poruka" /><button type="submit">Pošalji</button></form>
+      <div id="chatBox" style="margin-top:10px;"></div>
+    </section>
+  </main>
+
+  <footer>© T·Solutions</footer>
+  <script>
+    const API = window.location.origin; const $ = s => document.querySelector(s);
+    (async function(){ const r = await fetch(`${API}/api/me`); if(!r.ok){ location.href="/login.html"; return; } })();
+    $("#logoutBtn")?.addEventListener('click', async ()=>{ await fetch(`${API}/api/logout`,{method:'POST'}); location.href="/login.html"; });
+
+    async function loadShares(){
+      const r = await fetch(`${API}/api/shares`); const list = await r.json(); const box = $("#shares"); box.innerHTML="";
+      if(!list.length){ box.innerHTML = `<div class="empty">Nema grupa.</div>`; return; }
+      for(const s of list){
+        const d = document.createElement('div'); d.className = 'card glass';
+        d.innerHTML = `<div class="row" style="justify-content:space-between;">
+          <div><b>${s.label}</b> <span style="color:var(--muted)">#${s.id}</span></div>
+          <div style="font-size:12px;color:var(--muted)">Dodaj troškove u formi na početnoj, uz <code>share_id=${s.id}</code> (opciono)</div>
+        </div>`;
+        box.appendChild(d);
+      }
+    }
+    loadShares();
+
+    $("#shareForm").onsubmit = async (e)=>{
+      e.preventDefault(); const fd = new FormData(e.target);
+      const r = await fetch(`${API}/api/shares`, { method:"POST", headers:{'Content-Type':'application/json'}, body: JSON.stringify({label: fd.get('label')}) });
+      const j = await r.json(); if (!r.ok) { $("#shareMsg").textContent = "Greška"; return; }
+      $("#shareMsg").innerHTML = `Kreirano: <b>#${j.id}</b> — podeli link: <code>${j.invite_link}</code>`; loadShares();
+    };
+
+    $("#joinForm").onsubmit = async (e)=>{
+      e.preventDefault(); const fd = new FormData(e.target);
+      const r = await fetch(`${API}/api/shares/join`, { method:"POST", headers:{'Content-Type':'application/json'}, body: JSON.stringify({token: fd.get('token')}) });
+      if (!r.ok){ alert("Greška"); return; } alert("Uspelo!"); loadShares();
+    };
+
+    $("#chatForm").onsubmit = async (e)=>{
+      e.preventDefault(); const fd = new FormData(e.target);
+      const payload = { share_id: Number(fd.get('share_id')), body: fd.get('body') };
+      const r = await fetch(`${API}/api/chat`, { method:"POST", headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+      if (!r.ok){ alert("Greška"); return; } e.target.body.value = ""; await loadChat(payload.share_id);
+    };
+    async function loadChat(shareId){
+      const r = await fetch(`${API}/api/chat?shareId=${shareId}`); const list = await r.json(); const box = $("#chatBox"); box.innerHTML="";
+      for (const m of list) { const d = document.createElement('div'); d.style.cssText = "padding:8px 10px;border-bottom:1px solid var(--border)"; d.textContent = `${new Date(m.sent_at).toLocaleString()} — ${m.from_user}: ${m.body}`; box.appendChild(d); }
+    }
+  </script>
+</body>
+</html>
