@@ -1,36 +1,83 @@
 const API = window.location.origin;
 const $ = s => document.querySelector(s);
 
-$("#loginForm").onsubmit = async (e)=>{
-  e.preventDefault();
-  const fd = new FormData(e.target);
-  const payload = { email: fd.get("email"), password: fd.get("password") };
-  $("#loginMsg").textContent = "Prijavljujem…";
-  try{
-    const r = await fetch(`${API}/api/login`, { method:"POST", headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
-    const j = await r.json();
-    if(!r.ok){ $("#loginMsg").textContent = j.error || "Greška"; return; }
-    location.href = "/";
-  }catch(err){ $("#loginMsg").textContent = "Greška"; console.error(err); }
-};
+async function postJSON(url, data){
+  const r = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) });
+  const j = await r.json().catch(()=> ({}));
+  if(!r.ok) throw new Error(j.error || r.statusText);
+  return j;
+}
 
-$("#regForm").onsubmit = async (e)=>{
-  e.preventDefault();
-  const fd = new FormData(e.target);
-  const payload = { email: fd.get("email"), password: fd.get("password"), full_name: fd.get("full_name") };
-  $("#regMsg").textContent = "Kreiram nalog…";
-  try{
-    const r = await fetch(`${API}/api/register`, { method:"POST", headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
-    const j = await r.json();
-    if(!r.ok){ $("#regMsg").textContent = j.error || "Greška"; return; }
-    $("#regMsg").textContent = "Proveri email i klikni verifikacioni link (ako nema SMTP, link je u konzoli servera).";
-  }catch(err){ $("#regMsg").textContent = "Greška"; console.error(err); }
-};
+/* ---------- LOGIN ---------- */
+const loginForm = $("#loginForm");
+if (loginForm){
+  loginForm.onsubmit = async (e)=>{
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    const payload = { email: fd.get("email"), password: fd.get("password") };
+    $("#loginMsg").textContent = "Prijavljujem…";
+    try{
+      await postJSON(`${API}/api/login`, payload);
+      location.href = "/";
+    }catch(err){
+      $("#loginMsg").textContent = err.message || "Greška";
+      console.error(err);
+    }
+  };
+}
 
-if (new URLSearchParams(location.search).get("verified") === "1") {
+/* ---------- REGISTER ---------- */
+const regForm = $("#regForm");
+if (regForm){
+  regForm.onsubmit = async (e)=>{
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    const payload = {
+      email: fd.get("email"),
+      name: fd.get("full_name") || fd.get("name") || "",
+      password: fd.get("password")
+    };
+    $("#regMsg").textContent = "Kreiram nalog…";
+    try{
+      await postJSON(`${API}/api/register`, payload);
+      $("#regMsg").textContent = "Proveri email i klikni verifikacioni link. (Ako SMTP nije podešen, link je u server konzoli.)";
+    }catch(err){
+      $("#regMsg").textContent = err.message || "Greška";
+      console.error(err);
+    }
+  };
+}
+
+/* ---------- VERIFY BY URL ?verify=TOKEN ---------- */
+(async function handleVerifyParam(){
+  const token = new URLSearchParams(location.search).get("verify");
+  if(!token) return;
+  try{
+    const r = await fetch(`${API}/api/verify?token=${encodeURIComponent(token)}`);
+    if(!r.ok) throw new Error(await r.text());
+    showToast("✅ Email verifikovan — prijavi se.");
+    // skini param iz URL-a
+    const u = new URL(location.href); u.searchParams.delete("verify"); history.replaceState({}, "", u);
+  }catch(e){
+    showToast("❌ Verifikacioni link je nevažeći ili iskorišćen.");
+    console.error(e);
+  }
+})();
+
+/* ---------- Helpers ---------- */
+function showToast(text){
   const n = document.createElement('div');
   n.className = 'ts-smart-card show';
-  n.innerHTML = `<div class="ts-smart-emoji">✅</div><div class="ts-smart-text">Email verifikovan — prijavi se.</div>`;
+  n.innerHTML = `<div class="ts-smart-emoji">✨</div><div class="ts-smart-text">${text}</div>`;
   document.body.appendChild(n);
   setTimeout(()=>{ n.classList.remove('show'); setTimeout(()=>n.remove(),400); }, 3200);
+}
+
+/* ---------- LOGOUT BTN (opcija u headeru) ---------- */
+const logoutBtn = $("#logoutBtn");
+if (logoutBtn){
+  logoutBtn.onclick = async ()=>{
+    try{ await postJSON(`${API}/api/logout`, {}); location.href = "/login.html"; }
+    catch(e){ console.error(e); }
+  };
 }
