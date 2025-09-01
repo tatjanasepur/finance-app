@@ -1,0 +1,7 @@
+# ignore local sqlite db files
+/expenses.db
+/expenses.db-shm
+/expenses.db-wal
+
+# ignore compiled classes
+/src/*.class
