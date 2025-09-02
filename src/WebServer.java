@@ -1,4 +1,5 @@
 import com.sun.net.httpserver.*;
+
 import java.io.*;
 import java.net.*;
 import java.nio.file.*;
@@ -12,24 +13,25 @@ import com.google.gson.reflect.TypeToken;
 
 public class WebServer {
     private static final Gson GSON = new Gson();
+
+    // PORT (Railway zada kroz env), lokalno 8080
     private static final int PORT = Integer.parseInt(System.getenv().getOrDefault("PORT", "8080"));
-    static final String APP_URL = System.getenv().getOrDefault("APP_URL", "http://localhost:" + PORT);
-    static final String DB = "expenses.db";
+    // Public URL (koristi se samo za log/health)
+    private static final String APP_URL = System.getenv().getOrDefault("APP_URL", "http://localhost:" + PORT);
+    // SQLite fajl
+    private static final String DB = "expenses.db";
 
     public static void main(String[] args) throws Exception {
         initDb();
 
         HttpServer server = HttpServer.create(new InetSocketAddress(PORT), 0);
 
-        // AUTH
+        // Auth API (bez mejla)
         server.createContext("/api/register", WebServer::apiRegister);
-        server.createContext("/api/verify", WebServer::apiVerify);
         server.createContext("/api/login", WebServer::apiLogin);
+        server.createContext("/api/health", WebServer::apiHealth);
 
-        // DIJAGNOSTIKA – probno slanje mejla
-        server.createContext("/api/test-email", WebServer::apiTestEmail);
-
-        // Statika
+        // Statički fajlovi iz /web
         server.createContext("/", WebServer::staticFiles);
 
         server.setExecutor(null);
@@ -37,41 +39,41 @@ public class WebServer {
         server.start();
     }
 
-    /* ========================= DB INIT ========================= */
-    static void initDb() throws SQLException {
+    /* ========================= DB ========================= */
+
+    private static void initDb() throws SQLException {
         try (Connection c = DriverManager.getConnection("jdbc:sqlite:" + DB);
                 Statement s = c.createStatement()) {
+            // Jednostavna tabela naloga bazirana na username + hash + salt
             s.execute("""
-                        CREATE TABLE IF NOT EXISTS users(
-                          id INTEGER PRIMARY KEY AUTOINCREMENT,
-                          email TEXT UNIQUE NOT NULL,
-                          full_name TEXT,
-                          salt TEXT NOT NULL,
-                          hash TEXT NOT NULL,
-                          verified INTEGER NOT NULL DEFAULT 0,
-                          verify_token TEXT,
+                        CREATE TABLE IF NOT EXISTS accounts(
+                          id         INTEGER PRIMARY KEY AUTOINCREMENT,
+                          username   TEXT UNIQUE NOT NULL,
+                          salt       TEXT NOT NULL,
+                          hash       TEXT NOT NULL,
                           created_at TEXT
                         );
                     """);
         }
     }
 
-    /* ========================= HELPERS ========================= */
-    static String read(InputStream in) throws IOException {
+    /* ========================= Helpers ========================= */
+
+    private static String readBody(InputStream in) throws IOException {
         try (BufferedReader br = new BufferedReader(new InputStreamReader(in, "UTF-8"))) {
             return br.lines().collect(Collectors.joining("\n"));
         }
     }
 
-    static Map<String, String> parseJson(InputStream in) throws IOException {
-        String body = read(in);
+    private static Map<String, String> parseJson(InputStream in) throws IOException {
+        String body = readBody(in);
         if (body == null || body.isBlank())
             return new HashMap<>();
         return GSON.fromJson(body, new TypeToken<Map<String, String>>() {
         }.getType());
     }
 
-    static void json(HttpExchange ex, int code, Object payload) throws IOException {
+    private static void json(HttpExchange ex, int code, Object payload) throws IOException {
         byte[] out = (payload instanceof String)
                 ? ((String) payload).getBytes("UTF-8")
                 : GSON.toJson(payload).getBytes("UTF-8");
@@ -82,7 +84,7 @@ public class WebServer {
         }
     }
 
-    static void text(HttpExchange ex, int code, String payload) throws IOException {
+    private static void text(HttpExchange ex, int code, String payload) throws IOException {
         byte[] out = payload.getBytes("UTF-8");
         ex.getResponseHeaders().set("Content-Type", "text/plain; charset=UTF-8");
         ex.sendResponseHeaders(code, out.length);
@@ -91,199 +93,124 @@ public class WebServer {
         }
     }
 
-    static void redirect(HttpExchange ex, String to) throws IOException {
-        ex.getResponseHeaders().set("Location", to);
-        ex.sendResponseHeaders(302, -1);
-        ex.close();
-    }
+    /* ========================= API ========================= */
 
-    /* ========================= AUTH API ========================= */
-
-    // POST /api/register BODY: { email, password, full_name? }
-    static void apiRegister(HttpExchange ex) throws IOException {
+    // POST /api/register { username, password }
+    private static void apiRegister(HttpExchange ex) throws IOException {
         if (!ex.getRequestMethod().equalsIgnoreCase("POST")) {
             ex.sendResponseHeaders(405, -1);
+            ex.close();
             return;
         }
         try (Connection c = DriverManager.getConnection("jdbc:sqlite:" + DB)) {
             Map<String, String> j = parseJson(ex.getRequestBody());
-            String email = j.getOrDefault("email", "").trim().toLowerCase();
-            String pass = j.getOrDefault("password", "").trim();
-            String name = j.getOrDefault("full_name", j.getOrDefault("name", "")).trim();
+            String username = j.getOrDefault("username", "").trim().toLowerCase();
+            String password = j.getOrDefault("password", "").trim();
 
-            if (email.isBlank() || pass.isBlank()) {
+            if (username.isBlank() || password.isBlank()) {
                 json(ex, 400, Map.of("error", "Nedostaju podaci"));
+                return;
+            }
+            // dozvoli slova, brojeve, tacku i donju crtu; 3-30 char
+            if (!username.matches("^[a-z0-9._]{3,30}$")) {
+                json(ex, 400, Map.of("error", "Neispravan username"));
                 return;
             }
 
             // postoji?
-            try (PreparedStatement ps = c.prepareStatement("SELECT id FROM users WHERE email=?")) {
-                ps.setString(1, email);
+            try (PreparedStatement ps = c.prepareStatement("SELECT id FROM accounts WHERE username=?")) {
+                ps.setString(1, username);
                 ResultSet rs = ps.executeQuery();
                 if (rs.next()) {
-                    json(ex, 409, Map.of("error", "Email postoji"));
+                    // predlog alternativnog username-a
+                    String suggestion = suggestUsername(c, username);
+                    json(ex, 409, Map.of("error", "Username zauzet", "suggestion", suggestion));
                     return;
                 }
             }
 
-            String[] hp = PasswordUtil.makeHash(pass);
-            String token = PasswordUtil.randomToken(24);
-
+            String[] hp = PasswordUtil.makeHash(password);
             try (PreparedStatement ins = c.prepareStatement(
-                    "INSERT INTO users(email,full_name,salt,hash,verified,verify_token,created_at) VALUES(?,?,?,?,0,?,?)")) {
-                ins.setString(1, email);
-                ins.setString(2, name);
-                ins.setString(3, hp[0]);
-                ins.setString(4, hp[1]);
-                ins.setString(5, token);
-                ins.setString(6, Instant.now().toString());
+                    "INSERT INTO accounts(username,salt,hash,created_at) VALUES(?,?,?,?)")) {
+                ins.setString(1, username);
+                ins.setString(2, hp[0]);
+                ins.setString(3, hp[1]);
+                ins.setString(4, Instant.now().toString());
                 ins.executeUpdate();
             }
-
-            String verifyUrl = APP_URL + "/api/verify?token=" + URLEncoder.encode(token, "UTF-8");
-            String html = "<p>Klikni da potvrdiš nalog:</p><p><a href='" + verifyUrl + "'>" + verifyUrl + "</a></p>";
-
-            boolean sent = true;
-            try {
-                // prvo pokušaj sinhrono (ako padne – vrati link klijentu i loguj grešku)
-                Mailer.sendHtml(email, "Verifikacija naloga", html);
-            } catch (Exception e) {
-                sent = false;
-                System.err.println("SMTP error while sending verification: " + e.getMessage());
-                e.printStackTrace();
-            }
-
-            json(ex, 200, Map.of("ok", true, "sent", sent, "verify_url", verifyUrl));
-        } catch (Exception e) {
-            e.printStackTrace();
-            json(ex, 500, Map.of("error", "Server"));
-        }
-    }
-
-    // GET /api/verify?token=...
-    static void apiVerify(HttpExchange ex) throws IOException {
-        if (!ex.getRequestMethod().equalsIgnoreCase("GET")) {
-            ex.sendResponseHeaders(405, -1);
-            return;
-        }
-        String q = ex.getRequestURI().getQuery();
-        String token = null;
-        if (q != null) {
-            for (String kv : q.split("&")) {
-                int i = kv.indexOf('=');
-                if (i > 0 && kv.substring(0, i).equals("token")) {
-                    token = URLDecoder.decode(kv.substring(i + 1), "UTF-8");
-                    break;
-                }
-            }
-        }
-        if (token == null || token.isBlank()) {
-            text(ex, 400, "Missing token");
-            return;
-        }
-
-        try (Connection c = DriverManager.getConnection("jdbc:sqlite:" + DB)) {
-            try (PreparedStatement ps = c.prepareStatement(
-                    "SELECT id,email,verified FROM users WHERE verify_token=?")) {
-                ps.setString(1, token);
-                ResultSet rs = ps.executeQuery();
-                if (!rs.next()) {
-                    text(ex, 404, "Nevažeći token");
-                    return;
-                }
-                if (rs.getInt("verified") == 1) {
-                    redirect(ex, "/login.html?verified=1");
-                    return;
-                }
-                long id = rs.getLong("id");
-                try (PreparedStatement up = c.prepareStatement(
-                        "UPDATE users SET verified=1, verify_token=NULL WHERE id=?")) {
-                    up.setLong(1, id);
-                    up.executeUpdate();
-                }
-            }
-            redirect(ex, "/login.html?verified=1");
+            json(ex, 200, Map.of("ok", true));
         } catch (SQLException e) {
             e.printStackTrace();
-            text(ex, 500, "DB error");
+            json(ex, 500, Map.of("error", "DB greška"));
         }
     }
 
-    // POST /api/login BODY: { email, password }
-    static void apiLogin(HttpExchange ex) throws IOException {
+    // POST /api/login { username, password }
+    private static void apiLogin(HttpExchange ex) throws IOException {
         if (!ex.getRequestMethod().equalsIgnoreCase("POST")) {
             ex.sendResponseHeaders(405, -1);
+            ex.close();
             return;
         }
         try (Connection c = DriverManager.getConnection("jdbc:sqlite:" + DB)) {
             Map<String, String> j = parseJson(ex.getRequestBody());
-            String email = j.getOrDefault("email", "").trim().toLowerCase();
-            String pass = j.getOrDefault("password", "").trim();
+            String username = j.getOrDefault("username", "").trim().toLowerCase();
+            String password = j.getOrDefault("password", "").trim();
 
-            if (email.isBlank() || pass.isBlank()) {
+            if (username.isBlank() || password.isBlank()) {
                 json(ex, 400, Map.of("error", "Nedostaju podaci"));
                 return;
             }
 
+            String salt = null, hash = null;
             try (PreparedStatement ps = c.prepareStatement(
-                    "SELECT salt,hash,verified FROM users WHERE email=?")) {
-                ps.setString(1, email);
+                    "SELECT salt,hash FROM accounts WHERE username=?")) {
+                ps.setString(1, username);
                 ResultSet rs = ps.executeQuery();
-                if (!rs.next()) {
-                    json(ex, 401, Map.of("error", "Pogrešan email ili lozinka"));
-                    return;
-                }
-
-                if (rs.getInt("verified") == 0) {
-                    json(ex, 403, Map.of("error", "Potvrdi email pre prijave"));
-                    return;
-                }
-
-                String salt = rs.getString("salt");
-                String hash = rs.getString("hash");
-                if (!PasswordUtil.verify(pass, salt, hash)) {
-                    json(ex, 401, Map.of("error", "Pogrešan email ili lozinka"));
-                    return;
+                if (rs.next()) {
+                    salt = rs.getString("salt");
+                    hash = rs.getString("hash");
                 }
             }
+            if (salt == null) {
+                json(ex, 401, Map.of("error", "Pogrešan username ili lozinka"));
+                return;
+            }
+            if (!PasswordUtil.verify(password, salt, hash)) {
+                json(ex, 401, Map.of("error", "Pogrešan username ili lozinka"));
+                return;
+            }
 
+            // ovde bi postavljao sesiju/kolacice; za sada samo OK
             json(ex, 200, Map.of("ok", true));
         } catch (SQLException e) {
             e.printStackTrace();
-            json(ex, 500, Map.of("error", "Server"));
+            json(ex, 500, Map.of("error", "DB greška"));
         }
     }
 
-    /* ====== Dijagnostika: /api/test-email?to=... ====== */
-    static void apiTestEmail(HttpExchange ex) throws IOException {
-        if (!ex.getRequestMethod().equalsIgnoreCase("GET")) {
-            ex.sendResponseHeaders(405, -1);
-            return;
-        }
-        String to = Optional.ofNullable(ex.getRequestURI().getQuery()).orElse("");
-        String email = null;
-        for (String kv : to.split("&")) {
-            int i = kv.indexOf('=');
-            if (i > 0 && kv.substring(0, i).equals("to")) {
-                email = URLDecoder.decode(kv.substring(i + 1), "UTF-8");
-                break;
+    // GET /api/health
+    private static void apiHealth(HttpExchange ex) throws IOException {
+        json(ex, 200, Map.of("ok", true, "url", APP_URL));
+    }
+
+    private static String suggestUsername(Connection c, String base) throws SQLException {
+        // pokušaj base1..base999
+        for (int i = 1; i < 1000; i++) {
+            String cand = base + i;
+            try (PreparedStatement ps = c.prepareStatement("SELECT 1 FROM accounts WHERE username=?")) {
+                ps.setString(1, cand);
+                ResultSet rs = ps.executeQuery();
+                if (!rs.next())
+                    return cand;
             }
         }
-        if (email == null || email.isBlank()) {
-            json(ex, 400, Map.of("error", "Missing ?to="));
-            return;
-        }
-        try {
-            Mailer.sendHtml(email, "Test", "<p>Radi ✅</p>");
-            json(ex, 200, Map.of("ok", true, "to", email));
-        } catch (Exception e) {
-            e.printStackTrace();
-            json(ex, 500, Map.of("error", "SMTP: " + e.getMessage()));
-        }
+        return base + "_" + System.currentTimeMillis() / 1000;
     }
 
-    /* ========================= STATIC FILES ========================= */
-    static void staticFiles(HttpExchange ex) throws IOException {
+    /* ========================= Static files ========================= */
+
+    private static void staticFiles(HttpExchange ex) throws IOException {
         String path = ex.getRequestURI().getPath();
         if (path.equals("/"))
             path = "/index.html";
@@ -293,6 +220,7 @@ public class WebServer {
             file = Paths.get("web/index.html");
             if (!Files.exists(file)) {
                 ex.sendResponseHeaders(404, -1);
+                ex.close();
                 return;
             }
         }
@@ -306,7 +234,7 @@ public class WebServer {
         }
     }
 
-    static String guessContentType(Path p) {
+    private static String guessContentType(Path p) {
         String n = p.getFileName().toString().toLowerCase();
         if (n.endsWith(".html"))
             return "text/html; charset=UTF-8";
