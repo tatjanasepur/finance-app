@@ -5,21 +5,51 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>T•Solutions — Finance App (Prijava)</title>
   <style>
+    /* ===== Tema (dark / light) ===== */
     :root{
       --bg:#0b0f14; --panel:#121820; --panel-2:#0f141c; --text:#e8eef6; --muted:#9fb0c8;
       --accent:#8ec5ff; --accent-2:#4ea1ff; --ring:rgba(142,197,255,.45); --danger:#ff6b6b;
       --shadow:0 10px 30px rgba(0,0,0,.35);
     }
+    /* LIGHT: nežno roze sa prelazima */
     :root[data-theme="light"]{
-      --bg:#f6f8fb; --panel:#ffffff; --panel-2:#f0f4f9; --text:#0b1220; --muted:#55657d;
-      --accent:#4ea1ff; --accent-2:#297ee6; --ring:rgba(41,126,230,.25); --danger:#e05656;
+      --bg:#fff4fb;                /* svetla ružičasta podloga */
+      --panel:#ffffff;             /* bele kartice */
+      --panel-2:#ffe9f6;           /* nežna ružičastobelа */
+      --text:#20121e; --muted:#6a4d61;
+      --accent:#ff95c8;            /* roze akcenat */
+      --accent-2:#f06dc2;          /* dublji roze */
+      --ring:rgba(240,109,194,.28); --danger:#e05656;
       --shadow:0 10px 24px rgba(0,0,0,.08);
     }
+
     *{box-sizing:border-box}
-    html,body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif;min-height:100%}
-    .topbar{display:flex;justify-content:space-between;align-items:center;gap:16px;
-      padding:18px 24px;background:linear-gradient(180deg,var(--panel),var(--panel-2));position:sticky;top:0;z-index:10;
-      border-bottom:1px solid rgba(255,255,255,.06)}
+    html,body{
+      margin:0; min-height:100%;
+      background:var(--bg); color:var(--text);
+      font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif
+    }
+
+    /* Pozadinski “blend” (blagi prelazi) – svetlije u light modu */
+    .bgfx{
+      position:fixed; inset:0; z-index:-1; pointer-events:none;
+      background:
+        radial-gradient(900px 600px at -10% -10%, rgba(78,161,255,.16), transparent 60%),
+        radial-gradient(800px 500px at 120% 0%, rgba(142,197,255,.12), transparent 60%);
+    }
+    :root[data-theme="light"] .bgfx{
+      background:
+        radial-gradient(900px 600px at -10% -10%, rgba(255,149,200,.35), transparent 60%),
+        radial-gradient(800px 500px at 110% 20%, rgba(255,213,238,.55), transparent 60%),
+        radial-gradient(700px 500px at 50% 110%, rgba(255,170,214,.35), transparent 60%);
+      filter:saturate(110%);
+    }
+
+    .topbar{
+      display:flex;justify-content:space-between;align-items:center;gap:16px;
+      padding:18px 24px;background:linear-gradient(180deg,var(--panel),var(--panel-2));
+      position:sticky;top:0;z-index:10;border-bottom:1px solid rgba(0,0,0,.06)
+    }
     .title{display:flex;gap:10px;align-items:center}
     .dot{width:8px;height:8px;border-radius:50%;background:var(--accent)}
     .topbar h1{margin:0;font-size:18px}
@@ -28,14 +58,16 @@
     .switch:before{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:.2s}
     [data-theme="dark"] .switch{background:#3b4454}
     [data-theme="dark"] .switch:before{transform:translateX(20px)}
+
     .page{max-width:900px;margin:28px auto;padding:0 16px}
-    .card{background:var(--panel);border:1px solid rgba(255,255,255,.06);border-radius:18px;padding:18px;box-shadow:var(--shadow)}
+    .card{background:var(--panel);border:1px solid rgba(0,0,0,.06);border-radius:18px;padding:18px;box-shadow:var(--shadow)}
     .card + .card{margin-top:16px}
     .card h2{margin:0 0 12px}
-    .hr{height:1px;background:rgba(255,255,255,.08);border:0;margin:18px 0}
     label{display:block;margin:0 0 6px;color:var(--muted);font-size:13px}
-    input,button{background:transparent;border:1px solid rgba(255,255,255,.12);color:var(--text);
-      padding:12px 12px;border-radius:12px;font-size:14px;outline:none;transition:.15s}
+    input,button{
+      background:transparent;border:1px solid rgba(0,0,0,.12);color:var(--text);
+      padding:12px 12px;border-radius:12px;font-size:14px;outline:none;transition:.15s
+    }
     input:focus,button:focus{box-shadow:0 0 0 5px var(--ring);border-color:var(--accent)}
     .btn{cursor:pointer}
     .primary{background:linear-gradient(135deg,var(--accent),var(--accent-2));border:none;color:#081320;font-weight:700}
@@ -44,21 +76,17 @@
     .col{flex:1;min-width:220px}
     .footer{padding:28px 12px;color:var(--muted);text-align:center}
 
-    /* floating “logo” orb (čist CSS, bez pozadine) */
+    /* plutajući “TS” orb (bez slike) */
     .orb{
       position:fixed; right:28px; bottom:28px; width:72px; height:72px; border-radius:50%;
       background: conic-gradient(from 0deg, var(--accent), var(--accent-2) 50%, var(--accent) 100%);
-      box-shadow: 0 10px 30px rgba(0,0,0,.35), inset 0 0 30px rgba(255,255,255,.08);
+      box-shadow: 0 10px 30px rgba(0,0,0,.25), inset 0 0 30px rgba(255,255,255,.08);
       display:flex;align-items:center;justify-content:center; font-weight:800; letter-spacing:.5px;
       color:#0b1220; user-select:none; pointer-events:none; isolation:isolate;
       animation: float 5s ease-in-out infinite, spin 14s linear infinite;
     }
-    .orb::after{ /* blagi sjaj koji “diše” */
-      content:""; position:absolute; inset:-8px; border-radius:inherit; filter:blur(18px);
-      background: radial-gradient(60% 60% at 50% 50%, var(--accent-2), transparent 60%);
-      opacity:.35; animation: pulse 3.6s ease-in-out infinite;
-      z-index:-1;
-    }
+    .orb::after{content:""; position:absolute; inset:-8px; border-radius:inherit; filter:blur(18px);
+      background: radial-gradient(60% 60% at 50% 50%, var(--accent-2), transparent 60%); opacity:.35; animation: pulse 3.6s ease-in-out infinite; z-index:-1;}
     @keyframes float{ 0%,100%{ transform: translateY(0) } 50%{ transform: translateY(-10px) } }
     @keyframes spin{ to{ transform: rotate(360deg) } }
     @keyframes pulse{ 0%,100%{opacity:.25} 50%{opacity:.5} }
@@ -66,6 +94,8 @@
   </style>
 </head>
 <body>
+  <div class="bgfx"></div>
+
   <header class="topbar">
     <div class="title"><div class="dot"></div><h1>T•Solutions — Finance App</h1></div>
     <div class="theme">
@@ -77,15 +107,16 @@
   <main class="page">
     <section class="card">
       <h2>Prijava</h2>
-      <form id="loginForm" class="grid">
+      <!-- DEV: gasimo nativnu validaciju -->
+      <form id="loginForm" class="grid" novalidate>
         <div class="row">
           <div class="col">
             <label>Email ili korisničko ime</label>
-            <input type="text" id="loginId" placeholder="username ili email" required>
+            <input type="text" id="loginId" placeholder="username ili email">
           </div>
           <div class="col">
             <label>Lozinka</label>
-            <input type="password" id="loginPwd" placeholder="******" required>
+            <input type="password" id="loginPwd" placeholder="******">
           </div>
           <div><button class="btn primary" type="submit">Prijavi se</button></div>
         </div>
@@ -94,11 +125,11 @@
 
     <section class="card">
       <h2>Registracija</h2>
-      <form id="registerForm" class="grid">
+      <form id="registerForm" class="grid" novalidate>
         <div class="row">
           <div class="col">
             <label>Korisničko ime</label>
-            <input type="text" id="regUser" required>
+            <input type="text" id="regUser">
           </div>
           <div class="col">
             <label>Ime i prezime</label>
@@ -112,7 +143,7 @@
           </div>
           <div class="col">
             <label>Lozinka</label>
-            <input type="password" id="regPwd" placeholder="******" required>
+            <input type="password" id="regPwd" placeholder="******">
           </div>
           <div><button class="btn primary" type="submit">Kreiraj nalog</button></div>
         </div>
@@ -121,12 +152,10 @@
   </main>
 
   <footer class="footer">© T•Solutions</footer>
-
-  <!-- lebdeći kružić - inicijali firme -->
   <div class="orb"><span>TS</span></div>
 
   <script>
-    // tema
+    // ========== Tema (čuva izbor) ==========
     const root=document.documentElement;
     const saved=localStorage.getItem('ts_theme'); if(saved) root.setAttribute('data-theme', saved);
     document.getElementById('themeSwitch').addEventListener('click',()=>{
@@ -134,30 +163,36 @@
       root.setAttribute('data-theme',cur); localStorage.setItem('ts_theme',cur);
     });
 
-    // DEV auth (bez backenda) – ako user ne postoji, kreira ga i loguje
+    // ========== DEV auth (uvek pusti) ==========
     const USERS_KEY='ts_users_v1', CURRENT_KEY='ts_current_user_v1';
     const loadUsers=()=>{try{return JSON.parse(localStorage.getItem(USERS_KEY))||[]}catch{return[]}};
     const saveUsers=(u)=>localStorage.setItem(USERS_KEY,JSON.stringify(u));
-    const setCurrent=(u)=>localStorage.setItem(CURRENT_KEY,JSON.stringify({username:u.username,name=u.name||''}));
+    const setCurrent=(u)=>localStorage.setItem(CURRENT_KEY,JSON.stringify({username:u.username,name:u.name||''}));
+
+    // Login: ako ne postoji korisnik -> kreiraj; ako postoji -> uloguj (ignoriše šifru u DEV-u)
     document.getElementById('loginForm').addEventListener('submit', (e)=>{
       e.preventDefault();
-      const id=document.getElementById('loginId').value.trim();
-      const pwd=document.getElementById('loginPwd').value;
+      const id=(document.getElementById('loginId').value||'guest').trim() || 'guest';
+      const pwd=document.getElementById('loginPwd').value||'';
       const users=loadUsers();
       let u=users.find(x=>x.username.toLowerCase()===id.toLowerCase() || (x.email||'').toLowerCase()===id.toLowerCase());
       if(!u){ u={username:id,name:id,email:'',password:pwd}; users.push(u); saveUsers(users); }
-      else if((u.password||'')!==pwd){ return alert('Pogrešna lozinka.'); }
+      else { u.password=pwd; saveUsers(users); }
       setCurrent(u); location.href='index.html';
     });
+
+    // Registracija (opciono, prosta)
     document.getElementById('registerForm').addEventListener('submit',(e)=>{
       e.preventDefault();
       const u=(document.getElementById('regUser').value||'').trim();
       const name=document.getElementById('regName').value.trim();
       const email=document.getElementById('regEmail').value.trim();
       const pwd=document.getElementById('regPwd').value;
+      if(!u){ alert('Unesi korisničko ime'); return; }
       const users=loadUsers();
       if(users.some(x=>x.username.toLowerCase()===u.toLowerCase())) return alert('Korisničko ime zauzeto.');
-      users.push({username:u,name,email,password:pwd}); saveUsers(users); alert('Nalog kreiran. Možeš da se prijaviš.');
+      users.push({username:u,name,email,password:pwd}); saveUsers(users);
+      alert('Nalog kreiran. Možeš da se prijaviš.');
     });
   </script>
 </body>

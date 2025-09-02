@@ -8,38 +8,33 @@
     :root{
       --bg:#0b0f14; --panel:#121820; --panel-2:#0f141c; --text:#e8eef6; --muted:#9fb0c8;
       --accent:#8ec5ff; --accent-2:#4ea1ff; --ring:rgba(142,197,255,.45); --danger:#ff6b6b;
-      --shadow:0 10px 30px rgba(0,0,0,.35);
-      --ok:#60dba2; --warn:#ffd36a;
+      --shadow:0 10px 30px rgba(0,0,0,.35); --ok:#60dba2; --warn:#ffd36a;
     }
     :root[data-theme="light"]{
-      --bg:#f6f8fb; --panel:#ffffff; --panel-2:#f0f4f9; --text:#0b1220; --muted:#55657d;
-      --accent:#4ea1ff; --accent-2:#297ee6; --ring:rgba(41,126,230,.25); --danger:#e05656;
+      --bg:#fff4fb; --panel:#ffffff; --panel-2:#ffe9f6; --text:#20121e; --muted:#6a4d61;
+      --accent:#ff95c8; --accent-2:#f06dc2; --ring:rgba(240,109,194,.28); --danger:#e05656;
       --shadow:0 10px 24px rgba(0,0,0,.08); --ok:#1fa97a; --warn:#c79915;
     }
-    *{box-sizing:border-box}
-    html,body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif;min-height:100%}
 
-    /* animated gradient “blobs” background */
+    *{box-sizing:border-box}
+    html,body{margin:0;min-height:100%;background:var(--bg);color:var(--text);font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif}
+
+    /* animirana pozadina (različita u light modu) */
     .bgfx{
-      position:fixed; inset:0; z-index:-1; overflow:hidden;
-      background: radial-gradient(800px 600px at -10% -10%, rgba(78,161,255,.25), transparent 60%),
-                  radial-gradient(700px 500px at 110% 20%, rgba(142,197,255,.20), transparent 60%),
-                  radial-gradient(600px 500px at 50% 110%, rgba(96,219,162,.18), transparent 60%);
+      position:fixed; inset:0; z-index:-1; pointer-events:none;
+      background:
+        radial-gradient(900px 600px at -10% -10%, rgba(78,161,255,.16), transparent 60%),
+        radial-gradient(800px 500px at 120% 0%, rgba(142,197,255,.12), transparent 60%);
+    }
+    :root[data-theme="light"] .bgfx{
+      background:
+        radial-gradient(900px 600px at -10% -10%, rgba(255,149,200,.35), transparent 60%),
+        radial-gradient(800px 500px at 110% 20%, rgba(255,213,238,.55), transparent 60%),
+        radial-gradient(700px 500px at 50% 110%, rgba(255,170,214,.35), transparent 60%);
       filter:saturate(110%);
     }
-    .blob{
-      position:absolute; width:520px; height:520px; border-radius:50%;
-      background: radial-gradient(circle at 30% 30%, rgba(78,161,255,.55), rgba(78,161,255,0) 70%);
-      animation: move1 18s ease-in-out infinite;
-      mix-blend-mode:screen; pointer-events:none;
-    }
-    .blob.b2{ left:auto; right:-120px; top:-80px; background: radial-gradient(circle at 70% 40%, rgba(142,197,255,.5), rgba(142,197,255,0) 65%); animation: move2 22s ease-in-out infinite; }
-    .blob.b3{ left:30%; bottom:-140px; top:auto; background: radial-gradient(circle at 50% 50%, rgba(96,219,162,.45), rgba(96,219,162,0) 70%); animation: move3 26s ease-in-out infinite; }
-    @keyframes move1{ 0%,100%{transform:translate(-80px,-40px)} 50%{transform:translate(20px,20px)} }
-    @keyframes move2{ 0%,100%{transform:translate(60px,-20px)} 50%{transform:translate(-20px,40px)} }
-    @keyframes move3{ 0%,100%{transform:translate(0,0)} 50%{transform:translate(40px,-30px)} }
 
-    .topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:18px 24px;background:linear-gradient(180deg,var(--panel),var(--panel-2));border-bottom:1px solid rgba(255,255,255,.06);position:sticky;top:0;z-index:10}
+    .topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:18px 24px;background:linear-gradient(180deg,var(--panel),var(--panel-2));border-bottom:1px solid rgba(0,0,0,.06);position:sticky;top:0;z-index:10}
     .title{display:flex;gap:10px;align-items:center}
     .dot{width:8px;height:8px;border-radius:50%;background:var(--accent)}
     .topbar h1{margin:0;font-size:18px}
@@ -48,42 +43,42 @@
     .switch:before{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:.2s}
     [data-theme="dark"] .switch{background:#3b4454}
     [data-theme="dark"] .switch:before{transform:translateX(20px)}
+
     .container{max-width:1200px;margin:24px auto;padding:0 16px;display:grid;gap:18px}
-    .card{background:var(--panel);border:1px solid rgba(255,255,255,.06);border-radius:18px;padding:18px;box-shadow:var(--shadow)}
+    .card{background:var(--panel);border:1px solid rgba(0,0,0,.06);border-radius:18px;padding:18px;box-shadow:var(--shadow)}
     .card h2{margin:0 0 12px}
     label{display:block;margin:0 0 6px;color:var(--muted);font-size:13px}
-    input,select,button{background:transparent;border:1px solid rgba(255,255,255,.12);color:var(--text);
-      padding:12px 12px;border-radius:12px;font-size:14px;outline:none;transition:.15s}
+    input,select,button{background:transparent;border:1px solid rgba(0,0,0,.12);color:var(--text);padding:12px 12px;border-radius:12px;font-size:14px;outline:none;transition:.15s}
     input:focus,select:focus,button:focus{box-shadow:0 0 0 5px var(--ring);border-color:var(--accent)}
     .btn{cursor:pointer}
     .primary{background:linear-gradient(135deg,var(--accent),var(--accent-2));border:none;color:#081320;font-weight:700}
     .danger{border-color:var(--danger);color:var(--danger)}
-    .ghost{border-color:rgba(255,255,255,.16);color:var(--muted)}
+    .ghost{border-color:rgba(0,0,0,.12);color:var(--muted)}
     .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
     @media (max-width:900px){.grid{grid-template-columns:repeat(2,1fr)}}
     @media (max-width:560px){.grid{grid-template-columns:1fr}}
     .summary{display:flex;gap:12px;flex-wrap:wrap}
-    .pill{background:var(--panel-2);border:1px solid rgba(255,255,255,.08);padding:10px 14px;border-radius:999px;display:flex;gap:8px;align-items:center}
+    .pill{background:var(--panel-2);border:1px solid rgba(0,0,0,.06);padding:10px 14px;border-radius:999px;display:flex;gap:8px;align-items:center}
     .pill span{color:var(--muted)}
     .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
-    .chips .chip{background:var(--panel-2);border:1px solid rgba(255,255,255,.08);border-radius:999px;padding:6px 10px;font-size:13px}
-    .tableWrap{overflow:auto;border:1px solid rgba(255,255,255,.06);border-radius:12px}
+    .chips .chip{background:var(--panel-2);border:1px solid rgba(0,0,0,.06);border-radius:999px;padding:6px 10px;font-size:13px}
+    .tableWrap{overflow:auto;border:1px solid rgba(0,0,0,.06);border-radius:12px}
     table{width:100%;border-collapse:collapse;font-size:14px}
     thead tr{background:var(--panel-2)}
-    th,td{padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.06);vertical-align:middle}
+    th,td{padding:10px 12px;border-bottom:1px solid rgba(0,0,0,.06);vertical-align:middle}
     .num{text-align:right}
     .actions{display:flex;gap:8px;justify-content:flex-end}
-    .action{padding:6px 10px;border-radius:8px;border:1px solid rgba(255,255,255,.16);background:transparent;color:var(--text);font-size:13px;cursor:pointer}
+    .action{padding:6px 10px;border-radius:8px;border:1px solid rgba(0,0,0,.12);background:transparent;color:var(--text);font-size:13px;cursor:pointer}
     .action.edit{border-color:var(--accent);color:var(--accent)}
     .action.del{border-color:var(--danger);color:var(--danger)}
     .footer{padding:28px 12px;color:var(--muted);text-align:center}
     .row{display:flex;gap:8px;align-items:end;flex-wrap:wrap}
 
-    /* lebdeći TS orb */
+    /* plutajući TS orb */
     .orb{
       position:fixed; right:28px; bottom:28px; width:72px; height:72px; border-radius:50%;
       background: conic-gradient(from 0deg, var(--accent), var(--accent-2) 50%, var(--accent) 100%);
-      box-shadow: 0 10px 30px rgba(0,0,0,.35), inset 0 0 30px rgba(255,255,255,.08);
+      box-shadow: 0 10px 30px rgba(0,0,0,.25), inset 0 0 30px rgba(255,255,255,.08);
       display:flex;align-items:center;justify-content:center; font-weight:800; letter-spacing:.5px;
       color:#0b1220; user-select:none; pointer-events:none; isolation:isolate;
       animation: float 5s ease-in-out infinite, spin 14s linear infinite;
@@ -97,12 +92,7 @@
   </style>
 </head>
 <body>
-  <!-- animated background -->
-  <div class="bgfx">
-    <div class="blob b1"></div>
-    <div class="blob b2"></div>
-    <div class="blob b3"></div>
-  </div>
+  <div class="bgfx"></div>
 
   <header class="topbar">
     <div class="title"><div class="dot"></div><h1>T•Solutions — Expense App</h1></div>
@@ -166,18 +156,16 @@
   </main>
 
   <footer class="footer">© T•Solutions</footer>
-
-  <!-- lebdeći kružić -->
   <div class="orb"><span>TS</span></div>
 
   <!-- QR modal -->
   <div class="modal" id="qrModal" style="position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:50">
-    <div class="box" style="background:var(--panel);border:1px solid rgba(255,255,255,.1);border-radius:18px;padding:16px;max-width:520px;width:92%">
+    <div class="box" style="background:var(--panel);border:1px solid rgba(0,0,0,.1);border-radius:18px;padding:16px;max-width:520px;width:92%">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
         <h3 style="margin:0">Skeniraj QR</h3>
         <button id="qrClose" class="btn ghost">Zatvori</button>
       </div>
-      <video id="qrVideo" autoplay playsinline style="width:100%;border-radius:12px;border:1px solid rgba(255,255,255,.1)"></video>
+      <video id="qrVideo" autoplay playsinline style="width:100%;border-radius:12px;border:1px solid rgba(0,0,0,.1)"></video>
       <p class="hint" style="font-size:12px;color:var(--muted);margin-top:8px">Primer: AMT=123.45;DESC=opis;CAT=Hrana;DATE=2025-09-02</p>
       <p id="qrStatus" class="hint" style="font-size:12px;color:var(--muted)"></p>
     </div>
@@ -195,7 +183,7 @@
     // Odjava
     document.getElementById('logoutBtn').addEventListener('click',()=>localStorage.removeItem('ts_current_user_v1'));
 
-    // Expense app
+    // Expense app (localStorage)
     const LS_KEY='ts_expenses_v1';
     const $=id=>document.getElementById(id);
     const els={month:$('month'),clearAll:$('clearAll'),form:$('expenseForm'),date:$('date'),
@@ -252,7 +240,7 @@
       els.submitBtn.textContent='Sačuvaj izmenu';els.cancelEdit.hidden=false;window.scrollTo({top:0,behavior:'smooth'})}
     function removeItem(id){ if(!confirm('Obriši ovaj trošak?'))return; expenses=expenses.filter(x=>x.id!==id); save(); render(); }
 
-    // QR skeniranje
+    // QR skeniranje (BarcodeDetector)
     const qrModal=$('qrModal'), qrBtn=$('qrBtn'), qrClose=$('qrClose'), video=$('qrVideo'), qrStatus=$('qrStatus');
     let stream=null, detector=null, scanTimer=null;
     async function startQR(){
