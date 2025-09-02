@@ -12,23 +12,24 @@ import com.google.gson.reflect.TypeToken;
 
 public class WebServer {
     private static final Gson GSON = new Gson();
-    // Railway dodeli PORT; lokalno 8080
     private static final int PORT = Integer.parseInt(System.getenv().getOrDefault("PORT", "8080"));
-    // Public URL – koristi se u verifikacionom linku
     static final String APP_URL = System.getenv().getOrDefault("APP_URL", "http://localhost:" + PORT);
-    // SQLite baza
     static final String DB = "expenses.db";
 
     public static void main(String[] args) throws Exception {
         initDb();
 
         HttpServer server = HttpServer.create(new InetSocketAddress(PORT), 0);
-        // API
+
+        // AUTH
         server.createContext("/api/register", WebServer::apiRegister);
         server.createContext("/api/verify", WebServer::apiVerify);
         server.createContext("/api/login", WebServer::apiLogin);
 
-        // Statika iz /web
+        // DIJAGNOSTIKA – probno slanje mejla
+        server.createContext("/api/test-email", WebServer::apiTestEmail);
+
+        // Statika
         server.createContext("/", WebServer::staticFiles);
 
         server.setExecutor(null);
@@ -90,20 +91,25 @@ public class WebServer {
         }
     }
 
+    static void redirect(HttpExchange ex, String to) throws IOException {
+        ex.getResponseHeaders().set("Location", to);
+        ex.sendResponseHeaders(302, -1);
+        ex.close();
+    }
+
     /* ========================= AUTH API ========================= */
 
-    // POST /api/register { email, password, full_name }
+    // POST /api/register BODY: { email, password, full_name? }
     static void apiRegister(HttpExchange ex) throws IOException {
         if (!ex.getRequestMethod().equalsIgnoreCase("POST")) {
             ex.sendResponseHeaders(405, -1);
-            ex.close();
             return;
         }
         try (Connection c = DriverManager.getConnection("jdbc:sqlite:" + DB)) {
             Map<String, String> j = parseJson(ex.getRequestBody());
             String email = j.getOrDefault("email", "").trim().toLowerCase();
             String pass = j.getOrDefault("password", "").trim();
-            String name = j.getOrDefault("full_name", "").trim();
+            String name = j.getOrDefault("full_name", j.getOrDefault("name", "")).trim();
 
             if (email.isBlank() || pass.isBlank()) {
                 json(ex, 400, Map.of("error", "Nedostaju podaci"));
@@ -134,15 +140,20 @@ public class WebServer {
                 ins.executeUpdate();
             }
 
-            // verifikacioni link
             String verifyUrl = APP_URL + "/api/verify?token=" + URLEncoder.encode(token, "UTF-8");
-            String html = "<p>Klikni da potvrdiš nalog:</p><p><a href='" + verifyUrl + "'>"
-                    + verifyUrl + "</a></p>";
+            String html = "<p>Klikni da potvrdiš nalog:</p><p><a href='" + verifyUrl + "'>" + verifyUrl + "</a></p>";
 
-            // KLJUČNO: ne blokiraj UI – šalji u pozadini; ako ne uspe, link je u logu
-            Mailer.sendHtmlAsync(email, "Verifikacija naloga", html);
+            boolean sent = true;
+            try {
+                // prvo pokušaj sinhrono (ako padne – vrati link klijentu i loguj grešku)
+                Mailer.sendHtml(email, "Verifikacija naloga", html);
+            } catch (Exception e) {
+                sent = false;
+                System.err.println("SMTP error while sending verification: " + e.getMessage());
+                e.printStackTrace();
+            }
 
-            json(ex, 200, Map.of("ok", true));
+            json(ex, 200, Map.of("ok", true, "sent", sent, "verify_url", verifyUrl));
         } catch (Exception e) {
             e.printStackTrace();
             json(ex, 500, Map.of("error", "Server"));
@@ -153,7 +164,6 @@ public class WebServer {
     static void apiVerify(HttpExchange ex) throws IOException {
         if (!ex.getRequestMethod().equalsIgnoreCase("GET")) {
             ex.sendResponseHeaders(405, -1);
-            ex.close();
             return;
         }
         String q = ex.getRequestURI().getQuery();
@@ -199,11 +209,10 @@ public class WebServer {
         }
     }
 
-    // POST /api/login { email, password }
+    // POST /api/login BODY: { email, password }
     static void apiLogin(HttpExchange ex) throws IOException {
         if (!ex.getRequestMethod().equalsIgnoreCase("POST")) {
             ex.sendResponseHeaders(405, -1);
-            ex.close();
             return;
         }
         try (Connection c = DriverManager.getConnection("jdbc:sqlite:" + DB)) {
@@ -238,7 +247,6 @@ public class WebServer {
                 }
             }
 
-            // Ako koristiš sesije/kolacice – ovde ih postavi; za sada samo OK:
             json(ex, 200, Map.of("ok", true));
         } catch (SQLException e) {
             e.printStackTrace();
@@ -246,21 +254,45 @@ public class WebServer {
         }
     }
 
+    /* ====== Dijagnostika: /api/test-email?to=... ====== */
+    static void apiTestEmail(HttpExchange ex) throws IOException {
+        if (!ex.getRequestMethod().equalsIgnoreCase("GET")) {
+            ex.sendResponseHeaders(405, -1);
+            return;
+        }
+        String to = Optional.ofNullable(ex.getRequestURI().getQuery()).orElse("");
+        String email = null;
+        for (String kv : to.split("&")) {
+            int i = kv.indexOf('=');
+            if (i > 0 && kv.substring(0, i).equals("to")) {
+                email = URLDecoder.decode(kv.substring(i + 1), "UTF-8");
+                break;
+            }
+        }
+        if (email == null || email.isBlank()) {
+            json(ex, 400, Map.of("error", "Missing ?to="));
+            return;
+        }
+        try {
+            Mailer.sendHtml(email, "Test", "<p>Radi ✅</p>");
+            json(ex, 200, Map.of("ok", true, "to", email));
+        } catch (Exception e) {
+            e.printStackTrace();
+            json(ex, 500, Map.of("error", "SMTP: " + e.getMessage()));
+        }
+    }
+
     /* ========================= STATIC FILES ========================= */
     static void staticFiles(HttpExchange ex) throws IOException {
         String path = ex.getRequestURI().getPath();
-
-        // mapiranje root-a na /web/index.html
         if (path.equals("/"))
             path = "/index.html";
 
         Path file = Paths.get("web" + path).normalize();
         if (!file.startsWith(Paths.get("web")) || !Files.exists(file) || Files.isDirectory(file)) {
-            // fallback: /web/index.html za SPA rute
             file = Paths.get("web/index.html");
             if (!Files.exists(file)) {
                 ex.sendResponseHeaders(404, -1);
-                ex.close();
                 return;
             }
         }
@@ -289,11 +321,5 @@ public class WebServer {
         if (n.endsWith(".svg"))
             return "image/svg+xml";
         return "application/octet-stream";
-    }
-
-    static void redirect(HttpExchange ex, String to) throws IOException {
-        ex.getResponseHeaders().set("Location", to);
-        ex.sendResponseHeaders(302, -1);
-        ex.close();
     }
 }
