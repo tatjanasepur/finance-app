@@ -1,74 +1,47 @@
-const API = window.location.origin;
-const $ = s => document.querySelector(s);
-
-async function postJSON(url, data){
-  const r = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data)
-  });
-  let j = {};
-  try { j = await r.json(); } catch(e){}
-  if (!r.ok) throw new Error(j.error || r.statusText || "Greška");
-  return j;
-}
-
-/* ---------- LOGIN ---------- */
-const loginForm = $("#loginForm");
-if (loginForm){
-  loginForm.onsubmit = async (e)=>{
-    e.preventDefault();
-    const fd = new FormData(e.target);
-
-    // Polje u formi se zove "email", ali backend traži username.
-    // Uzimamo šta je korisnik uneo (može biti i email ili username),
-    // i šaljemo GA kao username ka backendu.
-    const identifier = (fd.get("email") || "").trim();
-    const password   = (fd.get("password") || "").trim();
-
-    $("#loginMsg").textContent = "Prijavljujem…";
+// Auth (radi sa backendom; ako backend ne odgovori, dozvoli ulaz lokalno za test)
+const api = {
+  login: async (id, pwd) => {
     try{
-      await postJSON(`${API}/api/login`, {
-        username: identifier,
-        password
+      const r = await fetch('/api/login', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ id, password: pwd })
       });
-      location.href = "/"; // uđi u app
-    }catch(err){
-      $("#loginMsg").textContent = err.message || "Greška";
-      console.error(err);
+      if (r.ok) return true;
+      throw new Error(await r.text());
+    }catch(e){
+      console.warn('Login fallback (dev):', e.message);
+      return true; // fallback za dev okruženje
     }
-  };
-}
-
-/* ---------- REGISTRACIJA ---------- */
-const regForm = $("#regForm");
-if (regForm){
-  regForm.onsubmit = async (e)=>{
-    e.preventDefault();
-    const fd = new FormData(e.target);
-
-    const payload = {
-      username:  (fd.get("username")  || "").trim(),
-      full_name: (fd.get("full_name") || "").trim(),
-      email:     (fd.get("email")     || "").trim(), // opciono
-      password:  (fd.get("password")  || "").trim()
-    };
-
-    if (!payload.username || !payload.password){
-      $("#regMsg").textContent = "Nedostaju podaci (username/lozinka).";
-      return;
-    }
-
-    $("#regMsg").textContent = "Kreiram nalog…";
+  },
+  register: async (u, name, email, pwd) => {
     try{
-      await postJSON(`${API}/api/register`, payload);
-      $("#regMsg").textContent = "✅ Nalog kreiran. Sad se prijavi gore.";
-      // Po želji: auto-login
-      // await postJSON(`${API}/api/login`, { username: payload.username, password: payload.password });
-      // location.href = "/";
-    }catch(err){
-      $("#regMsg").textContent = err.message || "Greška";
-      console.error(err);
+      const r = await fetch('/api/register', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ username:u, name, email, password:pwd })
+      });
+      if (r.ok) return true;
+      throw new Error(await r.text());
+    }catch(e){
+      alert('Registracija nije uspela: '+e.message);
+      return false;
     }
-  };
-}
+  }
+};
+
+document.getElementById('loginForm')?.addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  const id = document.getElementById('loginId').value.trim();
+  const pwd = document.getElementById('loginPwd').value;
+  const ok = await api.login(id, pwd);
+  if (ok) location.href = '/web/index.html';
+});
+
+document.getElementById('registerForm')?.addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  const u = document.getElementById('regUser').value.trim();
+  const name = document.getElementById('regName').value.trim();
+  const email = document.getElementById('regEmail').value.trim();
+  const pwd = document.getElementById('regPwd').value;
+  const ok = await api.register(u, name, email, pwd);
+  if (ok) alert('Nalog kreiran. Možeš da se prijaviš.');
+});

@@ -1,92 +1,80 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="sr">
 <head>
-  <meta charset="utf-8" />
-  <title>T·Solutions — Expense Tracker</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" href="./styles.css" />
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>T•Solutions — Expense App</title>
+  <link rel="stylesheet" href="/web/styles.css"/>
+  <script defer src="/web/app.js"></script>
 </head>
 <body>
-  <div class="hero"></div>
-
-  <header class="nav glass">
-    <div class="brand">
-      <img src="./logo.png" class="logo" alt="T·Solutions" />
-      <div class="brand-text">
-        <div class="brand-title">T·Solutions</div>
-        <div class="brand-sub">EXPENSE & SUBSCRIPTION TRACKER</div>
+  <header class="topbar">
+    <h1>T•Solutions — Expense App</h1>
+    <div class="form-row">
+      <div class="form-col" style="min-width:180px;">
+        <label for="month">Mesec</label>
+        <input type="month" id="month"/>
       </div>
+      <button id="clearAll" class="btn danger">Obriši sve</button>
+      <a class="btn ghost" href="/web/login.html" style="text-decoration:none;display:inline-flex;align-items:center">Odjava</a>
     </div>
-    <div class="spacer"></div>
-    <nav class="row" style="gap:8px;">
-      <a href="/" class="btnlink">Početna</a>
-      <a href="/subscriptions.html" class="btnlink">Pretplate</a>
-      <a href="/shared.html" class="btnlink">Zajednički troškovi</a>
-      <button id="logoutBtn">Odjava</button>
-      <button id="themeToggle" title="Promeni temu">🌙/☀️</button>
-    </nav>
   </header>
 
   <main class="container">
-    <section class="card glass">
+    <section class="card">
       <h2>Dodaj trošak</h2>
-      <form id="expenseForm" autocomplete="off">
+      <form id="expenseForm">
         <div class="grid">
-          <label>Naziv <input required name="name" placeholder="npr. Maxima / MOL / Netflix" /></label>
-          <label>Kategorija
-            <select name="category" id="category">
-              <option>FOOD</option><option>DAIRY</option><option>DELIKATES</option><option>HYGIENE</option>
-              <option>PHARMACY</option><option>ENTERTAINMENT</option><option>BILLS</option><option>TRANSPORT</option>
-              <option>FUEL</option><option>PARKING</option><option>SHOPPING</option><option>PETS</option>
-              <option>EDUCATION</option><option>HEALTH</option><option>OTHER</option>
+          <div>
+            <label>Datum</label>
+            <input type="date" id="date" required />
+          </div>
+          <div>
+            <label>Kategorija</label>
+            <select id="category" required>
+              <option>Hrana</option><option>Gorivo</option><option>Higijena</option>
+              <option>Izlasci</option><option>Računi</option><option>Odeća</option><option>Ostalo</option>
             </select>
-          </label>
-          <label>Iznos (€) <input required name="amount" type="number" step="0.01" inputmode="decimal" /></label>
-          <label>Datum <input name="date" type="datetime-local" /></label>
+          </div>
+          <div>
+            <label>Opis</label>
+            <input type="text" id="description" placeholder="npr. kafa, parking..." />
+          </div>
+          <div>
+            <label>Iznos (RSD)</label>
+            <input type="number" id="amount" min="0" step="0.01" required />
+          </div>
         </div>
-        <div class="row">
-          <button id="saveBtn" type="submit">Sačuvaj</button>
-          <label class="upload">📷 Učitaj račun (OCR)
-            <input id="receiptInput" type="file" accept="image/*" capture="environment" hidden />
-          </label>
-          <button id="qrBtn" type="button">🔍 QR skeniranje</button>
-          <span id="ocrHint"></span>
+        <div style="margin-top:12px;display:flex;gap:8px">
+          <button type="submit" id="submitBtn" class="btn primary">Dodaj</button>
+          <button type="button" id="cancelEdit" class="btn ghost" hidden>Otkaži izmenu</button>
         </div>
       </form>
     </section>
 
-    <section class="card glass">
-      <div class="row" style="justify-content:space-between;align-items:center;">
-        <h2>Pregled & Statistika</h2>
-        <input id="monthPicker" type="month" />
+    <section class="card">
+      <h2>Rezime</h2>
+      <div class="summary">
+        <div class="pill"><span>Ukupno:</span><strong id="sumTotal">0</strong></div>
+        <div class="pill"><span>Broj stavki:</span><strong id="sumCount">0</strong></div>
+        <div class="pill"><span>Prosek:</span><strong id="sumAvg">0</strong></div>
       </div>
-      <canvas id="pie" height="140"></canvas>
+      <div id="byCategory" class="chips"></div>
     </section>
 
-    <section class="card glass">
-      <h2>Svi troškovi</h2>
-      <input id="search" placeholder="Pretraga po nazivu/kategoriji…" />
-      <table id="table">
-        <thead><tr><th>ID</th><th>Naziv</th><th>Kategorija</th><th>Iznos</th><th>Datum</th><th></th></tr></thead>
-        <tbody></tbody>
-      </table>
-      <div id="empty" class="empty">Nema troškova još 🙂</div>
+    <section class="card">
+      <h2>Troškovi</h2>
+      <div class="tableWrap">
+        <table id="table">
+          <thead><tr>
+            <th>Datum</th><th>Kategorija</th><th>Opis</th><th class="num">Iznos</th><th></th>
+          </tr></thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
     </section>
   </main>
 
-  <div id="qrModal" class="cam-modal" style="display:none;">
-    <div class="cam-box glass">
-      <video id="qrVideo" autoplay playsinline></video>
-      <div class="cam-actions"><button id="closeQR" type="button">Zatvori</button></div>
-      <canvas id="qrCanvas" style="display:none;"></canvas>
-    </div>
-  </div>
-
-  <footer>© T·Solutions</footer>
-  <div class="aurora"></div>
-  <script src="./app.js"></script>
+  <footer class="footer"><p>© T•Solutions</p></footer>
 </body>
 </html>
