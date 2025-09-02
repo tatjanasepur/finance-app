@@ -1,47 +1,54 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="sr">
 <head>
-  <meta charset="utf-8" />
-  <title>Prijava — T·Solutions</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" href="./styles.css" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Prijava | T•Solutions</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div class="hero"></div>
-  <header class="nav glass">
-    <div class="brand">
-      <img src="./logo.png" class="logo" alt="T·Solutions" />
-      <div class="brand-text">
-        <div class="brand-title">T·Solutions</div>
-        <div class="brand-sub">LOGIN / REGISTER</div>
-      </div>
-    </div>
-  </header>
+  <div class="container">
+    <h1>T•Solutions — Finance App</h1>
 
-  <main class="container">
-    <section class="card glass">
+    <!-- LOGIN FORMA -->
+    <section>
       <h2>Prijava</h2>
-      <form id="loginForm" class="grid" autocomplete="off" style="grid-template-columns:1fr 1fr;">
-        <label>Email <input required name="email" type="email" placeholder="you@example.com" /></label>
-        <label>Lozinka <input required name="password" type="password" placeholder="••••••••" /></label>
-        <div></div><button type="submit">Prijavi se</button>
+      <form id="loginForm">
+        <label>Email ili korisničko ime</label>
+        <input type="text" name="email" required placeholder="username ili email" />
+
+        <label>Lozinka</label>
+        <input type="password" name="password" required placeholder="******" />
+
+        <button type="submit">Prijavi se</button>
       </form>
-      <div id="loginMsg" style="margin-top:8px;color:var(--muted)"></div>
+      <p id="loginMsg" class="msg"></p>
     </section>
 
-    <section class="card glass">
+    <hr />
+
+    <!-- REGISTRACIJA -->
+    <section>
       <h2>Registracija</h2>
-      <form id="regForm" class="grid" autocomplete="off" style="grid-template-columns:1fr 1fr;">
-        <label>Ime i prezime <input name="full_name" placeholder="Tvoje ime (opciono)" /></label>
-        <label>Email <input required name="email" type="email" placeholder="you@example.com" /></label>
-        <label>Lozinka <input required name="password" type="password" placeholder="••••••••" /></label>
-        <div></div><button type="submit">Kreiraj nalog</button>
-      </form>
-      <div id="regMsg" style="margin-top:8px;color:var(--muted)"></div>
-    </section>
-  </main>
+      <form id="regForm">
+        <label>Korisničko ime</label>
+        <input type="text" name="username" required placeholder="tatjana123" />
 
-  <footer>© T·Solutions</footer>
-  <script src="./auth.js"></script>
+        <label>Ime i prezime</label>
+        <input type="text" name="full_name" placeholder="Tatjana Šepur" />
+
+        <label>Email (opciono)</label>
+        <input type="email" name="email" placeholder="you@example.com" />
+
+        <label>Lozinka</label>
+        <input type="password" name="password" required placeholder="******" />
+
+        <button type="submit">Kreiraj nalog</button>
+      </form>
+      <p id="regMsg" class="msg"></p>
+    </section>
+  </div>
+
+  <script src="auth.js"></script>
 </body>
 </html>
