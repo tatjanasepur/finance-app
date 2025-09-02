@@ -14,11 +14,31 @@
     :root[data-theme="light"]{
       --bg:#f6f8fb; --panel:#ffffff; --panel-2:#f0f4f9; --text:#0b1220; --muted:#55657d;
       --accent:#4ea1ff; --accent-2:#297ee6; --ring:rgba(41,126,230,.25); --danger:#e05656;
-      --shadow:0 10px 24px rgba(0,0,0,.08);
-      --ok:#1fa97a; --warn:#c79915;
+      --shadow:0 10px 24px rgba(0,0,0,.08); --ok:#1fa97a; --warn:#c79915;
     }
     *{box-sizing:border-box}
-    html,body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif}
+    html,body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif;min-height:100%}
+
+    /* animated gradient “blobs” background */
+    .bgfx{
+      position:fixed; inset:0; z-index:-1; overflow:hidden;
+      background: radial-gradient(800px 600px at -10% -10%, rgba(78,161,255,.25), transparent 60%),
+                  radial-gradient(700px 500px at 110% 20%, rgba(142,197,255,.20), transparent 60%),
+                  radial-gradient(600px 500px at 50% 110%, rgba(96,219,162,.18), transparent 60%);
+      filter:saturate(110%);
+    }
+    .blob{
+      position:absolute; width:520px; height:520px; border-radius:50%;
+      background: radial-gradient(circle at 30% 30%, rgba(78,161,255,.55), rgba(78,161,255,0) 70%);
+      animation: move1 18s ease-in-out infinite;
+      mix-blend-mode:screen; pointer-events:none;
+    }
+    .blob.b2{ left:auto; right:-120px; top:-80px; background: radial-gradient(circle at 70% 40%, rgba(142,197,255,.5), rgba(142,197,255,0) 65%); animation: move2 22s ease-in-out infinite; }
+    .blob.b3{ left:30%; bottom:-140px; top:auto; background: radial-gradient(circle at 50% 50%, rgba(96,219,162,.45), rgba(96,219,162,0) 70%); animation: move3 26s ease-in-out infinite; }
+    @keyframes move1{ 0%,100%{transform:translate(-80px,-40px)} 50%{transform:translate(20px,20px)} }
+    @keyframes move2{ 0%,100%{transform:translate(60px,-20px)} 50%{transform:translate(-20px,40px)} }
+    @keyframes move3{ 0%,100%{transform:translate(0,0)} 50%{transform:translate(40px,-30px)} }
+
     .topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:18px 24px;background:linear-gradient(180deg,var(--panel),var(--panel-2));border-bottom:1px solid rgba(255,255,255,.06);position:sticky;top:0;z-index:10}
     .title{display:flex;gap:10px;align-items:center}
     .dot{width:8px;height:8px;border-radius:50%;background:var(--accent)}
@@ -58,15 +78,32 @@
     .action.del{border-color:var(--danger);color:var(--danger)}
     .footer{padding:28px 12px;color:var(--muted);text-align:center}
     .row{display:flex;gap:8px;align-items:end;flex-wrap:wrap}
-    /* QR modal */
-    .modal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:50}
-    .modal.show{display:flex}
-    .modal .box{background:var(--panel);border:1px solid rgba(255,255,255,.1);border-radius:18px;padding:16px;max-width:520px;width:92%}
-    video{width:100%;border-radius:12px;border:1px solid rgba(255,255,255,.1)}
-    .hint{font-size:12px;color:var(--muted);margin-top:8px}
+
+    /* lebdeći TS orb */
+    .orb{
+      position:fixed; right:28px; bottom:28px; width:72px; height:72px; border-radius:50%;
+      background: conic-gradient(from 0deg, var(--accent), var(--accent-2) 50%, var(--accent) 100%);
+      box-shadow: 0 10px 30px rgba(0,0,0,.35), inset 0 0 30px rgba(255,255,255,.08);
+      display:flex;align-items:center;justify-content:center; font-weight:800; letter-spacing:.5px;
+      color:#0b1220; user-select:none; pointer-events:none; isolation:isolate;
+      animation: float 5s ease-in-out infinite, spin 14s linear infinite;
+    }
+    .orb::after{content:""; position:absolute; inset:-8px; border-radius:inherit; filter:blur(18px);
+      background: radial-gradient(60% 60% at 50% 50%, var(--accent-2), transparent 60%); opacity:.35; animation: pulse 3.6s ease-in-out infinite; z-index:-1;}
+    @keyframes float{ 0%,100%{ transform: translateY(0) } 50%{ transform: translateY(-10px) } }
+    @keyframes spin{ to{ transform: rotate(360deg) } }
+    @keyframes pulse{ 0%,100%{opacity:.25} 50%{opacity:.5} }
+    .orb span{mix-blend-mode:screen; font-size:18px}
   </style>
 </head>
 <body>
+  <!-- animated background -->
+  <div class="bgfx">
+    <div class="blob b1"></div>
+    <div class="blob b2"></div>
+    <div class="blob b3"></div>
+  </div>
+
   <header class="topbar">
     <div class="title"><div class="dot"></div><h1>T•Solutions — Expense App</h1></div>
     <div class="row">
@@ -104,7 +141,7 @@
           <button type="button" id="cancelEdit" class="btn ghost" hidden>Otkaži izmenu</button>
         </div>
       </form>
-      <p class="hint">QR format: <code>AMT=180;DESC=kafa;CAT=Hrana;DATE=2025-09-02</code></p>
+      <p class="hint" style="color:var(--muted);font-size:12px">QR format: <code>AMT=180;DESC=kafa;CAT=Hrana;DATE=2025-09-02</code></p>
     </section>
 
     <section class="card">
@@ -130,16 +167,19 @@
 
   <footer class="footer">© T•Solutions</footer>
 
+  <!-- lebdeći kružić -->
+  <div class="orb"><span>TS</span></div>
+
   <!-- QR modal -->
-  <div class="modal" id="qrModal">
-    <div class="box">
+  <div class="modal" id="qrModal" style="position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:50">
+    <div class="box" style="background:var(--panel);border:1px solid rgba(255,255,255,.1);border-radius:18px;padding:16px;max-width:520px;width:92%">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
         <h3 style="margin:0">Skeniraj QR</h3>
         <button id="qrClose" class="btn ghost">Zatvori</button>
       </div>
-      <video id="qrVideo" autoplay playsinline></video>
-      <p class="hint">Uperi kameru u QR kod sa tekstom u formatu: AMT=123.45;DESC=opis;CAT=Hrana;DATE=2025-09-02</p>
-      <p id="qrStatus" class="hint"></p>
+      <video id="qrVideo" autoplay playsinline style="width:100%;border-radius:12px;border:1px solid rgba(255,255,255,.1)"></video>
+      <p class="hint" style="font-size:12px;color:var(--muted);margin-top:8px">Primer: AMT=123.45;DESC=opis;CAT=Hrana;DATE=2025-09-02</p>
+      <p id="qrStatus" class="hint" style="font-size:12px;color:var(--muted)"></p>
     </div>
   </div>
 
@@ -152,10 +192,10 @@
       root.setAttribute('data-theme',cur); localStorage.setItem('ts_theme',cur);
     });
 
-    // Auth - odjava
+    // Odjava
     document.getElementById('logoutBtn').addEventListener('click',()=>localStorage.removeItem('ts_current_user_v1'));
 
-    // Expense app (localStorage)
+    // Expense app
     const LS_KEY='ts_expenses_v1';
     const $=id=>document.getElementById(id);
     const els={month:$('month'),clearAll:$('clearAll'),form:$('expenseForm'),date:$('date'),
@@ -212,18 +252,16 @@
       els.submitBtn.textContent='Sačuvaj izmenu';els.cancelEdit.hidden=false;window.scrollTo({top:0,behavior:'smooth'})}
     function removeItem(id){ if(!confirm('Obriši ovaj trošak?'))return; expenses=expenses.filter(x=>x.id!==id); save(); render(); }
 
-    // --- QR skeniranje (BarcodeDetector) ---
+    // QR skeniranje
     const qrModal=$('qrModal'), qrBtn=$('qrBtn'), qrClose=$('qrClose'), video=$('qrVideo'), qrStatus=$('qrStatus');
     let stream=null, detector=null, scanTimer=null;
-
     async function startQR(){
-      if(!('BarcodeDetector' in window)){ qrStatus.textContent='Ovaj pregledač ne podržava BarcodeDetector. Koristi Chrome/Edge ili unesi ručno.'; }
+      if(!('BarcodeDetector' in window)){ qrStatus.textContent='Pregledač ne podržava BarcodeDetector. Koristi Chrome/Edge.'; }
       detector = 'BarcodeDetector' in window ? new BarcodeDetector({formats:['qr_code']}) : null;
       try{
         stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}});
-        video.srcObject=stream; qrModal.classList.add('show');
-        scanTimer=setInterval(scanOnce, 350);
-        qrStatus.textContent='Skeniram...';
+        video.srcObject=stream; qrModal.style.display='flex';
+        scanTimer=setInterval(scanOnce, 350); qrStatus.textContent='Skeniram...';
       }catch(e){ alert('Kamera nije dostupna.'); }
     }
     async function scanOnce(){
@@ -233,12 +271,12 @@
         if(!barcodes || !barcodes.length) return;
         const raw = barcodes[0].rawValue || '';
         qrStatus.textContent='Pročitano: '+raw;
-        const parsed = parseQR(raw);
-        if(parsed){
-          if(parsed.DATE) els.date.value = parsed.DATE;
-          if(parsed.CAT)  els.category.value = parsed.CAT;
-          if(parsed.DESC) els.description.value = parsed.DESC;
-          if(parsed.AMT)  els.amount.value = parsed.AMT;
+        const p = {}; raw.split(';').forEach(s=>{ const [k,v]=s.split('='); if(k) p[k.trim().toUpperCase()]=(v||'').trim();});
+        if(Object.keys(p).length){
+          if(p.DATE) els.date.value=p.DATE;
+          if(p.CAT) els.category.value=p.CAT;
+          if(p.DESC) els.description.value=p.DESC;
+          if(p.AMT) els.amount.value=p.AMT;
           stopQR();
         }
       }catch{}
@@ -246,18 +284,8 @@
     function stopQR(){
       if(scanTimer) clearInterval(scanTimer); scanTimer=null;
       if(stream){ stream.getTracks().forEach(t=>t.stop()); stream=null; }
-      qrModal.classList.remove('show');
+      qrModal.style.display='none';
     }
-    function parseQR(text){
-      // očekuje npr: AMT=180;DESC=kafa;CAT=Hrana;DATE=2025-09-02
-      const out={}; text.split(';').forEach(p=>{
-        const [k,v] = p.split('=');
-        if(!k) return; out[k.trim().toUpperCase()] = (v||'').trim();
-      });
-      if(!out.AMT && !out.DESC && !out.CAT && !out.DATE) return null;
-      return out;
-    }
-
     qrBtn.addEventListener('click', startQR);
     qrClose.addEventListener('click', stopQR);
     qrModal.addEventListener('click',(e)=>{ if(e.target===qrModal) stopQR(); });

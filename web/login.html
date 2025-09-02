@@ -16,7 +16,7 @@
       --shadow:0 10px 24px rgba(0,0,0,.08);
     }
     *{box-sizing:border-box}
-    html,body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif}
+    html,body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif;min-height:100%}
     .topbar{display:flex;justify-content:space-between;align-items:center;gap:16px;
       padding:18px 24px;background:linear-gradient(180deg,var(--panel),var(--panel-2));position:sticky;top:0;z-index:10;
       border-bottom:1px solid rgba(255,255,255,.06)}
@@ -43,6 +43,26 @@
     .row{display:flex;gap:12px;flex-wrap:wrap;align-items:end}
     .col{flex:1;min-width:220px}
     .footer{padding:28px 12px;color:var(--muted);text-align:center}
+
+    /* floating “logo” orb (čist CSS, bez pozadine) */
+    .orb{
+      position:fixed; right:28px; bottom:28px; width:72px; height:72px; border-radius:50%;
+      background: conic-gradient(from 0deg, var(--accent), var(--accent-2) 50%, var(--accent) 100%);
+      box-shadow: 0 10px 30px rgba(0,0,0,.35), inset 0 0 30px rgba(255,255,255,.08);
+      display:flex;align-items:center;justify-content:center; font-weight:800; letter-spacing:.5px;
+      color:#0b1220; user-select:none; pointer-events:none; isolation:isolate;
+      animation: float 5s ease-in-out infinite, spin 14s linear infinite;
+    }
+    .orb::after{ /* blagi sjaj koji “diše” */
+      content:""; position:absolute; inset:-8px; border-radius:inherit; filter:blur(18px);
+      background: radial-gradient(60% 60% at 50% 50%, var(--accent-2), transparent 60%);
+      opacity:.35; animation: pulse 3.6s ease-in-out infinite;
+      z-index:-1;
+    }
+    @keyframes float{ 0%,100%{ transform: translateY(0) } 50%{ transform: translateY(-10px) } }
+    @keyframes spin{ to{ transform: rotate(360deg) } }
+    @keyframes pulse{ 0%,100%{opacity:.25} 50%{opacity:.5} }
+    .orb span{mix-blend-mode:screen; font-size:18px}
   </style>
 </head>
 <body>
@@ -102,6 +122,9 @@
 
   <footer class="footer">© T•Solutions</footer>
 
+  <!-- lebdeći kružić - inicijali firme -->
+  <div class="orb"><span>TS</span></div>
+
   <script>
     // tema
     const root=document.documentElement;
@@ -115,7 +138,7 @@
     const USERS_KEY='ts_users_v1', CURRENT_KEY='ts_current_user_v1';
     const loadUsers=()=>{try{return JSON.parse(localStorage.getItem(USERS_KEY))||[]}catch{return[]}};
     const saveUsers=(u)=>localStorage.setItem(USERS_KEY,JSON.stringify(u));
-    const setCurrent=(u)=>localStorage.setItem(CURRENT_KEY,JSON.stringify({username:u.username,name:u.name||''}));
+    const setCurrent=(u)=>localStorage.setItem(CURRENT_KEY,JSON.stringify({username:u.username,name=u.name||''}));
     document.getElementById('loginForm').addEventListener('submit', (e)=>{
       e.preventDefault();
       const id=document.getElementById('loginId').value.trim();
