@@ -1,11 +1,35 @@
 <!DOCTYPE html>
 <html lang="sr">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>T•Solutions — Finance App (Prijava)</title>
-  <link rel="stylesheet" href="/web/styles.css">
-  <script defer src="/web/auth.js"></script>
+
+  <style>
+    :root{
+      --bg:#0f1115; --panel:#161a22; --muted:#9aa3b2; --text:#e6ebf3;
+      --accent:#8ec5ff; --accent-strong:#4ea1ff; --danger:#ff6b6b; --ring:rgba(142,197,255,.4);
+    }
+    *{box-sizing:border-box} html,body{margin:0;background:var(--bg);color:var(--text);
+      font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif}
+    .topbar{display:flex;align-items:center;justify-content:space-between;padding:20px 28px;
+      border-bottom:1px solid #1f2530;background:var(--panel)}
+    .topbar h1{margin:0;font-size:20px;letter-spacing:.3px}
+    .page{max-width:900px;margin:32px auto;padding:0 16px}
+    .card{background:var(--panel);border:1px solid #1f2530;border-radius:16px;padding:18px;margin-bottom:18px}
+    .card h2{margin:0 0 12px;font-size:18px}
+    label{display:block;margin:0 0 6px;color:var(--muted);font-size:13px}
+    input,button{background:#0b0e13;border:1px solid #242b36;color:var(--text);padding:10px 12px;border-radius:10px;font-size:14px;outline:none}
+    input:focus,button:focus{box-shadow:0 0 0 4px var(--ring);border-color:var(--accent)}
+    button{cursor:pointer}
+    .btn{padding:10px 12px;border-radius:10px;border:1px solid #2a3240;background:#0b0e13;color:var(--text);font-size:14px}
+    .btn.primary{background:var(--accent);border-color:transparent;color:#081320;font-weight:600}
+    .btn.primary:hover{background:var(--accent-strong)}
+    .form-row{display:flex;gap:12px;flex-wrap:wrap;align-items:end}
+    .form-col{flex:1;min-width:220px}
+    .hr{height:1px;background:#1f2530;border:0;margin:18px 0}
+    .footer{padding:40px 16px;color:var(--muted);text-align:center}
+  </style>
 </head>
 <body>
   <header class="topbar">
@@ -25,9 +49,7 @@
             <label>Lozinka</label>
             <input type="password" id="loginPwd" placeholder="******" required>
           </div>
-          <div>
-            <button class="btn primary" type="submit">Prijavi se</button>
-          </div>
+          <div><button class="btn primary" type="submit">Prijavi se</button></div>
         </div>
       </form>
     </section>
@@ -56,14 +78,52 @@
             <label>Lozinka</label>
             <input type="password" id="regPwd" placeholder="******" required>
           </div>
-          <div>
-            <button class="btn primary" type="submit">Kreiraj nalog</button>
-          </div>
+          <div><button class="btn primary" type="submit">Kreiraj nalog</button></div>
         </div>
       </form>
     </section>
   </main>
 
   <footer class="footer"><p>© T•Solutions</p></footer>
+
+  <script>
+    // Minimalni auth – radi sa backendom; ako backend ne radi, pusti ulaz (dev fallback)
+    async function apiLogin(id, pwd){
+      try{
+        const r = await fetch('/api/login', {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ id, password: pwd })
+        });
+        if (r.ok) return true;
+        throw new Error(await r.text());
+      }catch(e){ console.warn('Login fallback (dev):', e.message); return true; }
+    }
+    async function apiRegister(u, name, email, pwd){
+      try{
+        const r = await fetch('/api/register', {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ username:u, name, email, password:pwd })
+        });
+        if (r.ok) return true;
+        throw new Error(await r.text());
+      }catch(e){ alert('Registracija nije uspela: '+e.message); return false; }
+    }
+    document.getElementById('loginForm')?.addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      const id = document.getElementById('loginId').value.trim();
+      const pwd = document.getElementById('loginPwd').value;
+      const ok = await apiLogin(id, pwd);
+      if (ok) location.href = 'index.html';
+    });
+    document.getElementById('registerForm')?.addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      const u = document.getElementById('regUser').value.trim();
+      const name = document.getElementById('regName').value.trim();
+      const email = document.getElementById('regEmail').value.trim();
+      const pwd = document.getElementById('regPwd').value;
+      const ok = await apiRegister(u, name, email, pwd);
+      if (ok) alert('Nalog kreiran. Možeš da se prijaviš.');
+    });
+  </script>
 </body>
 </html>

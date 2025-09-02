@@ -4,19 +4,59 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>T•Solutions — Expense App</title>
-  <link rel="stylesheet" href="/web/styles.css"/>
-  <script defer src="/web/app.js"></script>
+
+  <style>
+    :root{
+      --bg:#0f1115; --panel:#161a22; --muted:#9aa3b2; --text:#e6ebf3;
+      --accent:#8ec5ff; --accent-strong:#4ea1ff; --danger:#ff6b6b; --ring:rgba(142,197,255,.4);
+    }
+    *{box-sizing:border-box} html,body{margin:0;background:var(--bg);color:var(--text);
+      font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif}
+    .topbar{display:flex;justify-content:space-between;align-items:center;padding:20px 28px;border-bottom:1px solid #1f2530;background:var(--panel)}
+    .topbar h1{margin:0;font-size:20px;letter-spacing:.3px}
+    .container{max-width:1100px;margin:24px auto;padding:0 16px;display:grid;gap:18px}
+    .card{background:var(--panel);border:1px solid #1f2530;border-radius:16px;padding:18px}
+    .card h2{margin:0 0 12px;font-size:18px}
+    label{display:block;margin:0 0 6px;color:var(--muted);font-size:13px}
+    input,select,button{background:#0b0e13;border:1px solid #242b36;color:var(--text);padding:10px 12px;border-radius:10px;font-size:14px;outline:none}
+    input:focus,select:focus,button:focus{box-shadow:0 0 0 4px var(--ring);border-color:var(--accent)}
+    button{cursor:pointer}
+    .btn{padding:10px 12px;border-radius:10px;border:1px solid #2a3240;background:#0b0e13;color:var(--text);font-size:14px}
+    .btn.primary{background:var(--accent);border-color:transparent;color:#081320;font-weight:600}
+    .btn.primary:hover{background:var(--accent-strong)}
+    .btn.danger{border-color:var(--danger);color:var(--danger)}
+    .btn.ghost{background:transparent;border-color:#2a3240;color:var(--muted)}
+    .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+    @media (max-width:900px){.grid{grid-template-columns:repeat(2,1fr)}}
+    @media (max-width:560px){.grid{grid-template-columns:1fr}}
+    .summary{display:flex;gap:12px;flex-wrap:wrap}
+    .pill{background:#0c1119;border:1px solid #1f2530;padding:10px 14px;border-radius:999px;display:flex;gap:8px;align-items:center}
+    .pill span{color:var(--muted)}
+    .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+    .chips .chip{background:#0c1119;border:1px solid #243045;border-radius:999px;padding:6px 10px;font-size:13px}
+    .tableWrap{overflow:auto;border:1px solid #1f2530;border-radius:12px}
+    table{width:100%;border-collapse:collapse;font-size:14px}
+    thead tr{background:#0c1119}
+    th,td{padding:10px 12px;border-bottom:1px solid #1f2530;vertical-align:middle}
+    .num{text-align:right}
+    .actions{display:flex;gap:8px;justify-content:flex-end}
+    .action{padding:6px 10px;border-radius:8px;border:1px solid #2a3240;background:#0b0e13;color:var(--text);font-size:13px}
+    .action.edit{border-color:var(--accent);color:var(--accent)}
+    .action.del{border-color:var(--danger);color:var(--danger)}
+    .footer{padding:40px 16px;color:var(--muted);text-align:center}
+    .form-row{display:flex;gap:8px;align-items:end}
+  </style>
 </head>
 <body>
   <header class="topbar">
     <h1>T•Solutions — Expense App</h1>
     <div class="form-row">
-      <div class="form-col" style="min-width:180px;">
+      <div style="min-width:180px">
         <label for="month">Mesec</label>
         <input type="month" id="month"/>
       </div>
       <button id="clearAll" class="btn danger">Obriši sve</button>
-      <a class="btn ghost" href="/web/login.html" style="text-decoration:none;display:inline-flex;align-items:center">Odjava</a>
+      <a class="btn ghost" href="login.html" style="text-decoration:none;display:inline-flex;align-items:center">Odjava</a>
     </div>
   </header>
 
@@ -25,25 +65,15 @@
       <h2>Dodaj trošak</h2>
       <form id="expenseForm">
         <div class="grid">
-          <div>
-            <label>Datum</label>
-            <input type="date" id="date" required />
-          </div>
-          <div>
-            <label>Kategorija</label>
+          <div><label>Datum</label><input type="date" id="date" required/></div>
+          <div><label>Kategorija</label>
             <select id="category" required>
               <option>Hrana</option><option>Gorivo</option><option>Higijena</option>
               <option>Izlasci</option><option>Računi</option><option>Odeća</option><option>Ostalo</option>
             </select>
           </div>
-          <div>
-            <label>Opis</label>
-            <input type="text" id="description" placeholder="npr. kafa, parking..." />
-          </div>
-          <div>
-            <label>Iznos (RSD)</label>
-            <input type="number" id="amount" min="0" step="0.01" required />
-          </div>
+          <div><label>Opis</label><input type="text" id="description" placeholder="npr. kafa, parking..."/></div>
+          <div><label>Iznos (RSD)</label><input type="number" id="amount" min="0" step="0.01" required/></div>
         </div>
         <div style="margin-top:12px;display:flex;gap:8px">
           <button type="submit" id="submitBtn" class="btn primary">Dodaj</button>
@@ -66,9 +96,7 @@
       <h2>Troškovi</h2>
       <div class="tableWrap">
         <table id="table">
-          <thead><tr>
-            <th>Datum</th><th>Kategorija</th><th>Opis</th><th class="num">Iznos</th><th></th>
-          </tr></thead>
+          <thead><tr><th>Datum</th><th>Kategorija</th><th>Opis</th><th class="num">Iznos</th><th></th></tr></thead>
           <tbody id="tbody"></tbody>
         </table>
       </div>
@@ -76,5 +104,64 @@
   </main>
 
   <footer class="footer"><p>© T•Solutions</p></footer>
+
+  <script>
+    // Expense app (bez spoljnjih fajlova) — localStorage
+    const LS_KEY='ts_expenses_v1';
+    const $=id=>document.getElementById(id);
+    const els={month:$('month'),clearAll:$('clearAll'),form:$('expenseForm'),date:$('date'),
+      category:$('category'),description:$('description'),amount:$('amount'),
+      submitBtn:$('submitBtn'),cancelEdit:$('cancelEdit'),tbody:$('tbody'),
+      sumTotal:$('sumTotal'),sumCount:$('sumCount'),sumAvg:$('sumAvg'),byCategory:$('byCategory')};
+    let expenses=load(); let editingId=null;
+    function load(){try{return JSON.parse(localStorage.getItem(LS_KEY))||[]}catch{return[]}}
+    function save(){localStorage.setItem(LS_KEY,JSON.stringify(expenses))}
+    function todayISO(){return new Date().toISOString().slice(0,10)}
+    function ym(d){return d.slice(0,7)}
+    function toRSD(n){return Number(n).toLocaleString('sr-RS',{style:'currency',currency:'RSD',maximumFractionDigits:2})}
+    function setDefaults(){els.date.value=todayISO();els.month.value=ym(todayISO())}
+    setDefaults(); render();
+
+    els.form.addEventListener('submit',e=>{
+      e.preventDefault();
+      const item={id:editingId??crypto.randomUUID(),date:els.date.value,category:els.category.value,
+                  description:(els.description.value||'').trim(),amount:Number(els.amount.value)};
+      if(!item.date||!item.category||isNaN(item.amount))return;
+      if(editingId){const i=expenses.findIndex(x=>x.id===editingId); if(i>=0)expenses[i]=item;} else {expenses.push(item);}
+      save(); resetForm(); render();
+    });
+    els.cancelEdit.addEventListener('click',resetForm);
+    els.clearAll.addEventListener('click',()=>{ if(confirm('Obrisati SVE troškove?')){expenses=[];save();render();}});
+    els.month.addEventListener('change',render);
+
+    function resetForm(){editingId=null;els.form.reset();els.date.value=todayISO();els.submitBtn.textContent='Dodaj';els.cancelEdit.hidden=true}
+    function render(){
+      const month=els.month.value||ym(todayISO());
+      const list=expenses.filter(x=>ym(x.date)===month).sort((a,b)=>a.date<b.date?1:-1);
+      els.tbody.innerHTML='';
+      for(const x of list){
+        const tr=document.createElement('tr');
+        tr.innerHTML=`<td>${x.date}</td><td>${x.category}</td><td>${x.description||''}</td>
+          <td class="num">${toRSD(x.amount)}</td>
+          <td class="actions"><button class="action edit">Izmeni</button><button class="action del">Obriši</button></td>`;
+        tr.querySelector('.edit').onclick=()=>startEdit(x);
+        tr.querySelector('.del').onclick=()=>removeItem(x.id);
+        els.tbody.appendChild(tr);
+      }
+      const total=list.reduce((s,x)=>s+x.amount,0);
+      els.sumTotal.textContent=toRSD(total);
+      els.sumCount.textContent=list.length;
+      els.sumAvg.textContent=list.length?toRSD(total/list.length):toRSD(0);
+      const byCat={}; for(const x of list){byCat[x.category]=(byCat[x.category]||0)+x.amount}
+      els.byCategory.innerHTML='';
+      Object.entries(byCat).sort((a,b)=>b[1]-a[1]).forEach(([k,v])=>{
+        const chip=document.createElement('div'); chip.className='chip'; chip.textContent=`${k}: ${toRSD(v)}`;
+        els.byCategory.appendChild(chip);
+      });
+    }
+    function startEdit(x){editingId=x.id;els.date.value=x.date;els.category.value=x.category;els.description.value=x.description||'';els.amount.value=x.amount;
+      els.submitBtn.textContent='Sačuvaj izmenu';els.cancelEdit.hidden=false;window.scrollTo({top:0,behavior:'smooth'})}
+    function removeItem(id){ if(!confirm('Obriši ovaj trošak?'))return; expenses=expenses.filter(x=>x.id!==id); save(); render(); }
+  </script>
 </body>
 </html>
