@@ -1,62 +1,86 @@
 <!DOCTYPE html>
-<html lang="sr">
+<html lang="sr" data-theme="dark">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>T•Solutions — Expense App</title>
-
   <style>
     :root{
-      --bg:#0f1115; --panel:#161a22; --muted:#9aa3b2; --text:#e6ebf3;
-      --accent:#8ec5ff; --accent-strong:#4ea1ff; --danger:#ff6b6b; --ring:rgba(142,197,255,.4);
+      --bg:#0b0f14; --panel:#121820; --panel-2:#0f141c; --text:#e8eef6; --muted:#9fb0c8;
+      --accent:#8ec5ff; --accent-2:#4ea1ff; --ring:rgba(142,197,255,.45); --danger:#ff6b6b;
+      --shadow:0 10px 30px rgba(0,0,0,.35);
+      --ok:#60dba2; --warn:#ffd36a;
     }
-    *{box-sizing:border-box} html,body{margin:0;background:var(--bg);color:var(--text);
-      font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif}
-    .topbar{display:flex;justify-content:space-between;align-items:center;padding:20px 28px;border-bottom:1px solid #1f2530;background:var(--panel)}
-    .topbar h1{margin:0;font-size:20px;letter-spacing:.3px}
-    .container{max-width:1100px;margin:24px auto;padding:0 16px;display:grid;gap:18px}
-    .card{background:var(--panel);border:1px solid #1f2530;border-radius:16px;padding:18px}
-    .card h2{margin:0 0 12px;font-size:18px}
+    :root[data-theme="light"]{
+      --bg:#f6f8fb; --panel:#ffffff; --panel-2:#f0f4f9; --text:#0b1220; --muted:#55657d;
+      --accent:#4ea1ff; --accent-2:#297ee6; --ring:rgba(41,126,230,.25); --danger:#e05656;
+      --shadow:0 10px 24px rgba(0,0,0,.08);
+      --ok:#1fa97a; --warn:#c79915;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif}
+    .topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:18px 24px;background:linear-gradient(180deg,var(--panel),var(--panel-2));border-bottom:1px solid rgba(255,255,255,.06);position:sticky;top:0;z-index:10}
+    .title{display:flex;gap:10px;align-items:center}
+    .dot{width:8px;height:8px;border-radius:50%;background:var(--accent)}
+    .topbar h1{margin:0;font-size:18px}
+    .theme{display:flex;gap:8px;align-items:center}
+    .switch{appearance:none;width:46px;height:26px;border-radius:999px;background:#8894a6;position:relative;cursor:pointer;border:none;outline:none}
+    .switch:before{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:.2s}
+    [data-theme="dark"] .switch{background:#3b4454}
+    [data-theme="dark"] .switch:before{transform:translateX(20px)}
+    .container{max-width:1200px;margin:24px auto;padding:0 16px;display:grid;gap:18px}
+    .card{background:var(--panel);border:1px solid rgba(255,255,255,.06);border-radius:18px;padding:18px;box-shadow:var(--shadow)}
+    .card h2{margin:0 0 12px}
     label{display:block;margin:0 0 6px;color:var(--muted);font-size:13px}
-    input,select,button{background:#0b0e13;border:1px solid #242b36;color:var(--text);padding:10px 12px;border-radius:10px;font-size:14px;outline:none}
-    input:focus,select:focus,button:focus{box-shadow:0 0 0 4px var(--ring);border-color:var(--accent)}
-    button{cursor:pointer}
-    .btn{padding:10px 12px;border-radius:10px;border:1px solid #2a3240;background:#0b0e13;color:var(--text);font-size:14px}
-    .btn.primary{background:var(--accent);border-color:transparent;color:#081320;font-weight:600}
-    .btn.primary:hover{background:var(--accent-strong)}
-    .btn.danger{border-color:var(--danger);color:var(--danger)}
-    .btn.ghost{background:transparent;border-color:#2a3240;color:var(--muted)}
+    input,select,button{background:transparent;border:1px solid rgba(255,255,255,.12);color:var(--text);
+      padding:12px 12px;border-radius:12px;font-size:14px;outline:none;transition:.15s}
+    input:focus,select:focus,button:focus{box-shadow:0 0 0 5px var(--ring);border-color:var(--accent)}
+    .btn{cursor:pointer}
+    .primary{background:linear-gradient(135deg,var(--accent),var(--accent-2));border:none;color:#081320;font-weight:700}
+    .danger{border-color:var(--danger);color:var(--danger)}
+    .ghost{border-color:rgba(255,255,255,.16);color:var(--muted)}
     .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
     @media (max-width:900px){.grid{grid-template-columns:repeat(2,1fr)}}
     @media (max-width:560px){.grid{grid-template-columns:1fr}}
     .summary{display:flex;gap:12px;flex-wrap:wrap}
-    .pill{background:#0c1119;border:1px solid #1f2530;padding:10px 14px;border-radius:999px;display:flex;gap:8px;align-items:center}
+    .pill{background:var(--panel-2);border:1px solid rgba(255,255,255,.08);padding:10px 14px;border-radius:999px;display:flex;gap:8px;align-items:center}
     .pill span{color:var(--muted)}
     .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
-    .chips .chip{background:#0c1119;border:1px solid #243045;border-radius:999px;padding:6px 10px;font-size:13px}
-    .tableWrap{overflow:auto;border:1px solid #1f2530;border-radius:12px}
+    .chips .chip{background:var(--panel-2);border:1px solid rgba(255,255,255,.08);border-radius:999px;padding:6px 10px;font-size:13px}
+    .tableWrap{overflow:auto;border:1px solid rgba(255,255,255,.06);border-radius:12px}
     table{width:100%;border-collapse:collapse;font-size:14px}
-    thead tr{background:#0c1119}
-    th,td{padding:10px 12px;border-bottom:1px solid #1f2530;vertical-align:middle}
+    thead tr{background:var(--panel-2)}
+    th,td{padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.06);vertical-align:middle}
     .num{text-align:right}
     .actions{display:flex;gap:8px;justify-content:flex-end}
-    .action{padding:6px 10px;border-radius:8px;border:1px solid #2a3240;background:#0b0e13;color:var(--text);font-size:13px}
+    .action{padding:6px 10px;border-radius:8px;border:1px solid rgba(255,255,255,.16);background:transparent;color:var(--text);font-size:13px;cursor:pointer}
     .action.edit{border-color:var(--accent);color:var(--accent)}
     .action.del{border-color:var(--danger);color:var(--danger)}
-    .footer{padding:40px 16px;color:var(--muted);text-align:center}
-    .form-row{display:flex;gap:8px;align-items:end}
+    .footer{padding:28px 12px;color:var(--muted);text-align:center}
+    .row{display:flex;gap:8px;align-items:end;flex-wrap:wrap}
+    /* QR modal */
+    .modal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:50}
+    .modal.show{display:flex}
+    .modal .box{background:var(--panel);border:1px solid rgba(255,255,255,.1);border-radius:18px;padding:16px;max-width:520px;width:92%}
+    video{width:100%;border-radius:12px;border:1px solid rgba(255,255,255,.1)}
+    .hint{font-size:12px;color:var(--muted);margin-top:8px}
   </style>
 </head>
 <body>
   <header class="topbar">
-    <h1>T•Solutions — Expense App</h1>
-    <div class="form-row">
-      <div style="min-width:180px">
+    <div class="title"><div class="dot"></div><h1>T•Solutions — Expense App</h1></div>
+    <div class="row">
+      <div style="min-width:200px">
         <label for="month">Mesec</label>
         <input type="month" id="month"/>
       </div>
+      <button id="qrBtn" class="btn ghost">Skeniraj QR</button>
       <button id="clearAll" class="btn danger">Obriši sve</button>
-      <a class="btn ghost" href="login.html" style="text-decoration:none;display:inline-flex;align-items:center">Odjava</a>
+      <a class="btn ghost" id="logoutBtn" href="login.html">Odjava</a>
+      <div class="theme">
+        <span style="font-size:12px;color:var(--muted)">Tema</span>
+        <button id="themeSwitch" class="switch" aria-label="Theme"></button>
+      </div>
     </div>
   </header>
 
@@ -80,6 +104,7 @@
           <button type="button" id="cancelEdit" class="btn ghost" hidden>Otkaži izmenu</button>
         </div>
       </form>
+      <p class="hint">QR format: <code>AMT=180;DESC=kafa;CAT=Hrana;DATE=2025-09-02</code></p>
     </section>
 
     <section class="card">
@@ -103,10 +128,34 @@
     </section>
   </main>
 
-  <footer class="footer"><p>© T•Solutions</p></footer>
+  <footer class="footer">© T•Solutions</footer>
+
+  <!-- QR modal -->
+  <div class="modal" id="qrModal">
+    <div class="box">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <h3 style="margin:0">Skeniraj QR</h3>
+        <button id="qrClose" class="btn ghost">Zatvori</button>
+      </div>
+      <video id="qrVideo" autoplay playsinline></video>
+      <p class="hint">Uperi kameru u QR kod sa tekstom u formatu: AMT=123.45;DESC=opis;CAT=Hrana;DATE=2025-09-02</p>
+      <p id="qrStatus" class="hint"></p>
+    </div>
+  </div>
 
   <script>
-    // Expense app (bez spoljnjih fajlova) — localStorage
+    // Tema
+    const root=document.documentElement;
+    const saved=localStorage.getItem('ts_theme'); if(saved) root.setAttribute('data-theme', saved);
+    document.getElementById('themeSwitch').addEventListener('click',()=>{
+      const cur=root.getAttribute('data-theme')==='dark'?'light':'dark';
+      root.setAttribute('data-theme',cur); localStorage.setItem('ts_theme',cur);
+    });
+
+    // Auth - odjava
+    document.getElementById('logoutBtn').addEventListener('click',()=>localStorage.removeItem('ts_current_user_v1'));
+
+    // Expense app (localStorage)
     const LS_KEY='ts_expenses_v1';
     const $=id=>document.getElementById(id);
     const els={month:$('month'),clearAll:$('clearAll'),form:$('expenseForm'),date:$('date'),
@@ -162,6 +211,56 @@
     function startEdit(x){editingId=x.id;els.date.value=x.date;els.category.value=x.category;els.description.value=x.description||'';els.amount.value=x.amount;
       els.submitBtn.textContent='Sačuvaj izmenu';els.cancelEdit.hidden=false;window.scrollTo({top:0,behavior:'smooth'})}
     function removeItem(id){ if(!confirm('Obriši ovaj trošak?'))return; expenses=expenses.filter(x=>x.id!==id); save(); render(); }
+
+    // --- QR skeniranje (BarcodeDetector) ---
+    const qrModal=$('qrModal'), qrBtn=$('qrBtn'), qrClose=$('qrClose'), video=$('qrVideo'), qrStatus=$('qrStatus');
+    let stream=null, detector=null, scanTimer=null;
+
+    async function startQR(){
+      if(!('BarcodeDetector' in window)){ qrStatus.textContent='Ovaj pregledač ne podržava BarcodeDetector. Koristi Chrome/Edge ili unesi ručno.'; }
+      detector = 'BarcodeDetector' in window ? new BarcodeDetector({formats:['qr_code']}) : null;
+      try{
+        stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}});
+        video.srcObject=stream; qrModal.classList.add('show');
+        scanTimer=setInterval(scanOnce, 350);
+        qrStatus.textContent='Skeniram...';
+      }catch(e){ alert('Kamera nije dostupna.'); }
+    }
+    async function scanOnce(){
+      if(!detector) return;
+      try{
+        const barcodes = await detector.detect(video);
+        if(!barcodes || !barcodes.length) return;
+        const raw = barcodes[0].rawValue || '';
+        qrStatus.textContent='Pročitano: '+raw;
+        const parsed = parseQR(raw);
+        if(parsed){
+          if(parsed.DATE) els.date.value = parsed.DATE;
+          if(parsed.CAT)  els.category.value = parsed.CAT;
+          if(parsed.DESC) els.description.value = parsed.DESC;
+          if(parsed.AMT)  els.amount.value = parsed.AMT;
+          stopQR();
+        }
+      }catch{}
+    }
+    function stopQR(){
+      if(scanTimer) clearInterval(scanTimer); scanTimer=null;
+      if(stream){ stream.getTracks().forEach(t=>t.stop()); stream=null; }
+      qrModal.classList.remove('show');
+    }
+    function parseQR(text){
+      // očekuje npr: AMT=180;DESC=kafa;CAT=Hrana;DATE=2025-09-02
+      const out={}; text.split(';').forEach(p=>{
+        const [k,v] = p.split('=');
+        if(!k) return; out[k.trim().toUpperCase()] = (v||'').trim();
+      });
+      if(!out.AMT && !out.DESC && !out.CAT && !out.DATE) return null;
+      return out;
+    }
+
+    qrBtn.addEventListener('click', startQR);
+    qrClose.addEventListener('click', stopQR);
+    qrModal.addEventListener('click',(e)=>{ if(e.target===qrModal) stopQR(); });
   </script>
 </body>
 </html>

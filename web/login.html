@@ -1,51 +1,69 @@
 <!DOCTYPE html>
-<html lang="sr">
+<html lang="sr" data-theme="dark">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>T•Solutions — Finance App (Prijava)</title>
-
   <style>
     :root{
-      --bg:#0f1115; --panel:#161a22; --muted:#9aa3b2; --text:#e6ebf3;
-      --accent:#8ec5ff; --accent-strong:#4ea1ff; --danger:#ff6b6b; --ring:rgba(142,197,255,.4);
+      --bg:#0b0f14; --panel:#121820; --panel-2:#0f141c; --text:#e8eef6; --muted:#9fb0c8;
+      --accent:#8ec5ff; --accent-2:#4ea1ff; --ring:rgba(142,197,255,.45); --danger:#ff6b6b;
+      --shadow:0 10px 30px rgba(0,0,0,.35);
     }
-    *{box-sizing:border-box} html,body{margin:0;background:var(--bg);color:var(--text);
-      font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif}
-    .topbar{display:flex;align-items:center;justify-content:space-between;padding:20px 28px;
-      border-bottom:1px solid #1f2530;background:var(--panel)}
-    .topbar h1{margin:0;font-size:20px;letter-spacing:.3px}
-    .page{max-width:900px;margin:32px auto;padding:0 16px}
-    .card{background:var(--panel);border:1px solid #1f2530;border-radius:16px;padding:18px;margin-bottom:18px}
-    .card h2{margin:0 0 12px;font-size:18px}
+    :root[data-theme="light"]{
+      --bg:#f6f8fb; --panel:#ffffff; --panel-2:#f0f4f9; --text:#0b1220; --muted:#55657d;
+      --accent:#4ea1ff; --accent-2:#297ee6; --ring:rgba(41,126,230,.25); --danger:#e05656;
+      --shadow:0 10px 24px rgba(0,0,0,.08);
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif}
+    .topbar{display:flex;justify-content:space-between;align-items:center;gap:16px;
+      padding:18px 24px;background:linear-gradient(180deg,var(--panel),var(--panel-2));position:sticky;top:0;z-index:10;
+      border-bottom:1px solid rgba(255,255,255,.06)}
+    .title{display:flex;gap:10px;align-items:center}
+    .dot{width:8px;height:8px;border-radius:50%;background:var(--accent)}
+    .topbar h1{margin:0;font-size:18px}
+    .theme{display:flex;align-items:center;gap:8px}
+    .switch{appearance:none;width:46px;height:26px;border-radius:999px;background:#8894a6;position:relative;cursor:pointer;border:none;outline:none}
+    .switch:before{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:.2s}
+    [data-theme="dark"] .switch{background:#3b4454}
+    [data-theme="dark"] .switch:before{transform:translateX(20px)}
+    .page{max-width:900px;margin:28px auto;padding:0 16px}
+    .card{background:var(--panel);border:1px solid rgba(255,255,255,.06);border-radius:18px;padding:18px;box-shadow:var(--shadow)}
+    .card + .card{margin-top:16px}
+    .card h2{margin:0 0 12px}
+    .hr{height:1px;background:rgba(255,255,255,.08);border:0;margin:18px 0}
     label{display:block;margin:0 0 6px;color:var(--muted);font-size:13px}
-    input,button{background:#0b0e13;border:1px solid #242b36;color:var(--text);padding:10px 12px;border-radius:10px;font-size:14px;outline:none}
-    input:focus,button:focus{box-shadow:0 0 0 4px var(--ring);border-color:var(--accent)}
-    button{cursor:pointer}
-    .btn{padding:10px 12px;border-radius:10px;border:1px solid #2a3240;background:#0b0e13;color:var(--text);font-size:14px}
-    .btn.primary{background:var(--accent);border-color:transparent;color:#081320;font-weight:600}
-    .btn.primary:hover{background:var(--accent-strong)}
-    .form-row{display:flex;gap:12px;flex-wrap:wrap;align-items:end}
-    .form-col{flex:1;min-width:220px}
-    .hr{height:1px;background:#1f2530;border:0;margin:18px 0}
-    .footer{padding:40px 16px;color:var(--muted);text-align:center}
+    input,button{background:transparent;border:1px solid rgba(255,255,255,.12);color:var(--text);
+      padding:12px 12px;border-radius:12px;font-size:14px;outline:none;transition:.15s}
+    input:focus,button:focus{box-shadow:0 0 0 5px var(--ring);border-color:var(--accent)}
+    .btn{cursor:pointer}
+    .primary{background:linear-gradient(135deg,var(--accent),var(--accent-2));border:none;color:#081320;font-weight:700}
+    .grid{display:grid;gap:12px}
+    .row{display:flex;gap:12px;flex-wrap:wrap;align-items:end}
+    .col{flex:1;min-width:220px}
+    .footer{padding:28px 12px;color:var(--muted);text-align:center}
   </style>
 </head>
 <body>
   <header class="topbar">
-    <h1>T•Solutions — Finance App</h1>
+    <div class="title"><div class="dot"></div><h1>T•Solutions — Finance App</h1></div>
+    <div class="theme">
+      <span style="font-size:12px;color:var(--muted)">Tema</span>
+      <button id="themeSwitch" class="switch" aria-label="Theme"></button>
+    </div>
   </header>
 
   <main class="page">
     <section class="card">
       <h2>Prijava</h2>
-      <form id="loginForm">
-        <div class="form-row">
-          <div class="form-col">
+      <form id="loginForm" class="grid">
+        <div class="row">
+          <div class="col">
             <label>Email ili korisničko ime</label>
             <input type="text" id="loginId" placeholder="username ili email" required>
           </div>
-          <div class="form-col">
+          <div class="col">
             <label>Lozinka</label>
             <input type="password" id="loginPwd" placeholder="******" required>
           </div>
@@ -54,27 +72,25 @@
       </form>
     </section>
 
-    <div class="hr"></div>
-
     <section class="card">
       <h2>Registracija</h2>
-      <form id="registerForm">
-        <div class="form-row">
-          <div class="form-col">
+      <form id="registerForm" class="grid">
+        <div class="row">
+          <div class="col">
             <label>Korisničko ime</label>
             <input type="text" id="regUser" required>
           </div>
-          <div class="form-col">
+          <div class="col">
             <label>Ime i prezime</label>
             <input type="text" id="regName" placeholder="Tatjana Šepur">
           </div>
         </div>
-        <div class="form-row">
-          <div class="form-col">
+        <div class="row">
+          <div class="col">
             <label>Email (opciono)</label>
             <input type="email" id="regEmail" placeholder="you@example.com">
           </div>
-          <div class="form-col">
+          <div class="col">
             <label>Lozinka</label>
             <input type="password" id="regPwd" placeholder="******" required>
           </div>
@@ -84,45 +100,41 @@
     </section>
   </main>
 
-  <footer class="footer"><p>© T•Solutions</p></footer>
+  <footer class="footer">© T•Solutions</footer>
 
   <script>
-    // Minimalni auth – radi sa backendom; ako backend ne radi, pusti ulaz (dev fallback)
-    async function apiLogin(id, pwd){
-      try{
-        const r = await fetch('/api/login', {
-          method:'POST', headers:{'Content-Type':'application/json'},
-          body: JSON.stringify({ id, password: pwd })
-        });
-        if (r.ok) return true;
-        throw new Error(await r.text());
-      }catch(e){ console.warn('Login fallback (dev):', e.message); return true; }
-    }
-    async function apiRegister(u, name, email, pwd){
-      try{
-        const r = await fetch('/api/register', {
-          method:'POST', headers:{'Content-Type':'application/json'},
-          body: JSON.stringify({ username:u, name, email, password:pwd })
-        });
-        if (r.ok) return true;
-        throw new Error(await r.text());
-      }catch(e){ alert('Registracija nije uspela: '+e.message); return false; }
-    }
-    document.getElementById('loginForm')?.addEventListener('submit', async (e)=>{
-      e.preventDefault();
-      const id = document.getElementById('loginId').value.trim();
-      const pwd = document.getElementById('loginPwd').value;
-      const ok = await apiLogin(id, pwd);
-      if (ok) location.href = 'index.html';
+    // tema
+    const root=document.documentElement;
+    const saved=localStorage.getItem('ts_theme'); if(saved) root.setAttribute('data-theme', saved);
+    document.getElementById('themeSwitch').addEventListener('click',()=>{
+      const cur=root.getAttribute('data-theme')==='dark'?'light':'dark';
+      root.setAttribute('data-theme',cur); localStorage.setItem('ts_theme',cur);
     });
-    document.getElementById('registerForm')?.addEventListener('submit', async (e)=>{
+
+    // DEV auth (bez backenda) – ako user ne postoji, kreira ga i loguje
+    const USERS_KEY='ts_users_v1', CURRENT_KEY='ts_current_user_v1';
+    const loadUsers=()=>{try{return JSON.parse(localStorage.getItem(USERS_KEY))||[]}catch{return[]}};
+    const saveUsers=(u)=>localStorage.setItem(USERS_KEY,JSON.stringify(u));
+    const setCurrent=(u)=>localStorage.setItem(CURRENT_KEY,JSON.stringify({username:u.username,name:u.name||''}));
+    document.getElementById('loginForm').addEventListener('submit', (e)=>{
       e.preventDefault();
-      const u = document.getElementById('regUser').value.trim();
-      const name = document.getElementById('regName').value.trim();
-      const email = document.getElementById('regEmail').value.trim();
-      const pwd = document.getElementById('regPwd').value;
-      const ok = await apiRegister(u, name, email, pwd);
-      if (ok) alert('Nalog kreiran. Možeš da se prijaviš.');
+      const id=document.getElementById('loginId').value.trim();
+      const pwd=document.getElementById('loginPwd').value;
+      const users=loadUsers();
+      let u=users.find(x=>x.username.toLowerCase()===id.toLowerCase() || (x.email||'').toLowerCase()===id.toLowerCase());
+      if(!u){ u={username:id,name:id,email:'',password:pwd}; users.push(u); saveUsers(users); }
+      else if((u.password||'')!==pwd){ return alert('Pogrešna lozinka.'); }
+      setCurrent(u); location.href='index.html';
+    });
+    document.getElementById('registerForm').addEventListener('submit',(e)=>{
+      e.preventDefault();
+      const u=(document.getElementById('regUser').value||'').trim();
+      const name=document.getElementById('regName').value.trim();
+      const email=document.getElementById('regEmail').value.trim();
+      const pwd=document.getElementById('regPwd').value;
+      const users=loadUsers();
+      if(users.some(x=>x.username.toLowerCase()===u.toLowerCase())) return alert('Korisničko ime zauzeto.');
+      users.push({username:u,name,email,password:pwd}); saveUsers(users); alert('Nalog kreiran. Možeš da se prijaviš.');
     });
   </script>
 </body>
