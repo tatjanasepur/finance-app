@@ -17,8 +17,8 @@
       --panel:#ffffff;             /* bele kartice */
       --panel-2:#ffe9f6;           /* nežna ružičastobelа */
       --text:#20121e; --muted:#6a4d61;
-      --accent:#ff95c8;            /* roze akcenat */
-      --accent-2:#f06dc2;          /* dublji roze */
+      --accent:#ff8bcf;            /* roze akcenat */
+      --accent-2:#ff6ec2;          /* dublji roze */
       --ring:rgba(240,109,194,.28); --danger:#e05656;
       --shadow:0 10px 24px rgba(0,0,0,.08);
     }
@@ -91,6 +91,29 @@
     @keyframes spin{ to{ transform: rotate(360deg) } }
     @keyframes pulse{ 0%,100%{opacity:.25} 50%{opacity:.5} }
     .orb span{mix-blend-mode:screen; font-size:18px}
+
+    /* ===== Mobile polish (login) ===== */
+    @media (max-width: 880px){
+      .topbar{ padding:14px 16px; }
+      .topbar h1{ font-size:16px; }
+      .page{ margin:18px auto; padding:0 12px; }
+      .card{ padding:14px; border-radius:16px; }
+      .row{ gap:10px; }
+      .col{ min-width:unset; flex:1 1 100%; }
+      input,button{ font-size:16px; padding:12px 12px; }
+      .primary{ width:100%; }
+      .theme{ gap:6px; }
+      .switch{ width:44px; height:24px; }
+      .switch:before{ width:18px; height:18px; }
+      .orb{ width:56px; height:56px; right:16px; bottom:16px; }
+      .orb span{ font-size:16px; }
+    }
+    @media (max-width: 420px){
+      .topbar h1{ display:none; }
+      .page{ padding:0 10px; }
+      .card{ padding:12px; }
+      input,button{ padding:11px 11px; }
+    }
   </style>
 </head>
 <body>
@@ -107,7 +130,7 @@
   <main class="page">
     <section class="card">
       <h2>Prijava</h2>
-      <!-- DEV: gasimo nativnu validaciju -->
+      <!-- DEV: novalidate + uvek pusti -->
       <form id="loginForm" class="grid" novalidate>
         <div class="row">
           <div class="col">

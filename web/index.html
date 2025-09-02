@@ -12,7 +12,7 @@
     }
     :root[data-theme="light"]{
       --bg:#fff4fb; --panel:#ffffff; --panel-2:#ffe9f6; --text:#20121e; --muted:#6a4d61;
-      --accent:#ff95c8; --accent-2:#f06dc2; --ring:rgba(240,109,194,.28); --danger:#e05656;
+      --accent:#ff8bcf; --accent-2:#ff6ec2; --ring:rgba(240,109,194,.28); --danger:#e05656;
       --shadow:0 10px 24px rgba(0,0,0,.08); --ok:#1fa97a; --warn:#c79915;
     }
 
@@ -89,6 +89,39 @@
     @keyframes spin{ to{ transform: rotate(360deg) } }
     @keyframes pulse{ 0%,100%{opacity:.25} 50%{opacity:.5} }
     .orb span{mix-blend-mode:screen; font-size:18px}
+
+    /* ===== Mobile polish (app) ===== */
+    @media (max-width: 980px){
+      .topbar{ padding:14px 16px; gap:10px; }
+      .title h1{ font-size:16px; }
+      .container{ margin:18px auto; padding:0 12px; gap:14px; }
+      .card{ padding:14px; border-radius:16px; }
+      .grid{ grid-template-columns:repeat(2,1fr); gap:10px; }
+      input,select,button{ font-size:16px; padding:12px; }
+      .primary,.danger,.ghost{ padding:12px; }
+      .row{ gap:8px; }
+      .pill{ padding:8px 12px; }
+      .chips .chip{ padding:6px 8px; }
+      .orb{ width:56px; height:56px; right:16px; bottom:16px; }
+      .orb span{ font-size:16px; }
+      .tableWrap{ border-radius:10px; }
+    }
+    @media (max-width: 600px){
+      .title h1{ display:none; }
+      .grid{ grid-template-columns:1fr; }
+      .primary{ width:100%; }
+      #cancelEdit{ width:100%; }
+      .row{ flex-direction:column; align-items:stretch; }
+      .topbar .row > *{ width:100%; }
+      .chips{ gap:6px; }
+      .chips .chip{ font-size:12px; }
+      th,td{ padding:9px 10px; }
+    }
+    @media (max-width: 400px){
+      .container{ padding:0 10px; }
+      .card{ padding:12px; }
+      input,select,button{ padding:10px; }
+    }
   </style>
 </head>
 <body>
