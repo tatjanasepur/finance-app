@@ -1,92 +1,56 @@
-
-// src/Mailer.java
 import java.util.Properties;
-
-import jakarta.mail.Authenticator;
-import jakarta.mail.Message;
-import jakarta.mail.PasswordAuthentication;
-import jakarta.mail.Session;
-import jakarta.mail.Transport;
-import jakarta.mail.internet.InternetAddress;
-import jakarta.mail.internet.MimeMessage;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import javax.mail.*;
+import javax.mail.internet.*;
 
 public class Mailer {
+    private static final ExecutorService pool = Executors.newFixedThreadPool(2);
 
-    /**
-     * Pošalji HTML email. Ako SMTP promenljive nisu podešene ili slanje padne,
-     * ispiše "SIMULACIJA" u konzoli (fallback), da aplikacija nastavi da radi.
-     */
-    public static void send(String to, String subject, String htmlBody) {
-        String host = getenv("SMTP_HOST");
-        String port = getenv("SMTP_PORT"); // npr. 587
-        String user = getenv("SMTP_USER");
-        String pass = getenv("SMTP_PASS");
-        String from = getenv("MAIL_FROM"); // npr. tsolutionsdev@outlook.com
-        if (from == null || from.isBlank())
-            from = user;
+    private static Session createSession() {
+        Properties props = new Properties();
+        props.put("mail.smtp.auth", "true");
+        props.put("mail.smtp.starttls.enable", "true");
+        props.put("mail.smtp.host", System.getenv("SMTP_HOST"));
+        props.put("mail.smtp.port", System.getenv("SMTP_PORT"));
 
-        boolean haveSmtp = notEmpty(host) && notEmpty(port) && notEmpty(user) && notEmpty(pass) && notEmpty(from);
-
-        if (!haveSmtp) {
-            simulate(to, subject, htmlBody, "Nedostaju SMTP varijable");
-            return;
-        }
-
-        try {
-            Properties props = new Properties();
-            props.put("mail.smtp.host", host);
-            props.put("mail.smtp.port", port);
-            props.put("mail.smtp.auth", "true");
-            // Office365/Outlook:
-            props.put("mail.smtp.starttls.enable", "true");
-            props.put("mail.smtp.starttls.required", "true");
-            // Ako se koristi moderni TLS, često pomaže trust:
-            props.put("mail.smtp.ssl.trust", host);
-
-            boolean debug = "1".equals(getenv("MAIL_DEBUG"));
-            Session session = Session.getInstance(props, new Authenticator() {
-                @Override
-                protected PasswordAuthentication getPasswordAuthentication() {
-                    return new PasswordAuthentication(user, pass);
-                }
-            });
-            session.setDebug(debug);
-
-            Message msg = new MimeMessage(session);
-            msg.setFrom(new InternetAddress(from));
-            msg.setRecipients(Message.RecipientType.TO, InternetAddress.parse(to, false));
-            msg.setSubject(subject);
-            msg.setContent(htmlBody, "text/html; charset=utf-8");
-
-            Transport.send(msg);
-            if (debug)
-                System.out.println("Email poslat OK → " + to);
-        } catch (Exception e) {
-            // Fallback da ne zapnemo na produkciji ako SMTP zezne
-            simulate(to, subject, htmlBody, "Greška pri slanju: " + e.getMessage());
-        }
+        return Session.getInstance(props, new Authenticator() {
+            @Override
+            protected PasswordAuthentication getPasswordAuthentication() {
+                return new PasswordAuthentication(
+                        System.getenv("SMTP_USER"),
+                        System.getenv("SMTP_PASS"));
+            }
+        });
     }
 
-    // -------- helpers --------
-    private static String getenv(String k) {
-        try {
-            return System.getenv(k);
-        } catch (Exception e) {
-            return null;
-        }
+    public static void sendHtml(String to, String subject, String html) throws MessagingException {
+        Session session = createSession();
+        Message message = new MimeMessage(session);
+        message.setFrom(new InternetAddress(System.getenv("MAIL_FROM")));
+        message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(to));
+        message.setSubject(subject);
+
+        MimeBodyPart bodyPart = new MimeBodyPart();
+        bodyPart.setContent(html, "text/html; charset=utf-8");
+
+        Multipart multipart = new MimeMultipart();
+        multipart.addBodyPart(bodyPart);
+
+        message.setContent(multipart);
+
+        Transport.send(message);
     }
 
-    private static boolean notEmpty(String s) {
-        return s != null && !s.isBlank();
-    }
-
-    private static void simulate(String to, String subject, String html, String reason) {
-        System.out.println("---- EMAIL (SIMULACIJA) ----");
-        System.out.println("Razlog: " + reason);
-        System.out.println("To: " + to);
-        System.out.println("Subject: " + subject);
-        System.out.println("Body:");
-        System.out.println(html);
-        System.out.println("----------------------------");
+    // 🔹 OVA metoda je falila
+    public static void sendHtmlAsync(String to, String subject, String html) {
+        pool.submit(() -> {
+            try {
+                sendHtml(to, subject, html);
+                System.out.println("Email poslat ka " + to);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
     }
 }
